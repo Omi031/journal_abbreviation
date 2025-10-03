@@ -7,7 +7,7 @@ import pyperclip
 import os
 
 # --- Core Logic from Journal_Abbreviations_ver2.py ---
-# 定数
+# 定数chimnpo
 DEL_FILENAME = "del.csv"
 REP_FILENAME = "replace.csv"
 
