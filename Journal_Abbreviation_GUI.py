@@ -7,7 +7,7 @@ import pyperclip
 import os
 
 # --- Core Logic from Journal_Abbreviations_ver2.py ---
-
+#こんにちは。
 # 定数
 DEL_FILENAME = "del.csv"
 REP_FILENAME = "replace.csv"
