@@ -1,36 +1,20 @@
-let settings = null;
-let title = [];
-let month = [];
-let titleDict = new Map();
-let monthDict = new Map();
+// --- State ---
 let eraWords = [];
 let repDict = new Map();
-
-// const $ = (sel) => document.querySelector(sel);
+// 既存コードの先頭付近に追記
+let settings = null;
 
 // 起動時に settings.json を読み込む
 async function loadSettings() {
   try {
-    // まずは埋め込みを試す
-    const el = document.getElementById('settings');
-    if (el?.textContent?.trim()) {
-      settings = JSON.parse(el.textContent);
-      return;
-    }
-
-    // 埋め込みが無ければ fetch（http配信前提）
-    if (location.protocol === 'file:') {
-      throw new Error('file:// では fetch が制限されます。AかBの方法を使ってください。');
-    }
     const res = await fetch('settings.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('settings.json を取得できませんでした');
     settings = await res.json();
   } catch (e) {
     console.warn(e);
-    showToast('設定の読み込みに失敗（手動CSVにフォールバック可）', false);
+    showToast('設定ファイルの読み込みに失敗（手動選択に切替）', false);
   }
 }
-
 
 // Excel からルール読込（settings.rules.excelUrl を利用）
 async function loadRulesFromExcel() {
@@ -46,33 +30,27 @@ async function loadRulesFromExcel() {
     // Excel をパース
     const wb = XLSX.read(ab, { type: 'array' });
 
-    // title シート
-    const titleSheetName = settings.rules.sheets?.title || 'title';
-    const titleSheet = wb.Sheets[titleSheetName];
-    if (!titleSheet) throw new Error(`シート '${titleSheetName}' が見つかりません`);
-    const titleJson = XLSX.utils.sheet_to_json(titleSheet, { header: 1, blankrows: false });
-    title = titleJson.slice(1).map(r => (r?.[0] ?? '').toString().trim()).filter(Boolean);
-    titleDict.clear();
-    titleJson.slice(1).forEach(r => {
+    // del シート
+    const delSheetName = settings.rules.sheets?.del || 'del';
+    const delSheet = wb.Sheets[delSheetName];
+    if (!delSheet) throw new Error(`シート '${delSheetName}' が見つかりません`);
+    const delJson = XLSX.utils.sheet_to_json(delSheet, { header: 1, blankrows: false });
+    // 1行目はヘッダ想定：2行目以降のA列
+    eraWords = delJson.slice(1).map(r => (r?.[0] ?? '').toString().trim()).filter(Boolean);
+
+    // replace シート
+    const repSheetName = settings.rules.sheets?.replace || 'replace';
+    const repSheet = wb.Sheets[repSheetName];
+    if (!repSheet) throw new Error(`シート '${repSheetName}' が見つかりません`);
+    const repJson = XLSX.utils.sheet_to_json(repSheet, { header: 1, blankrows: false });
+    repDict = new Map();
+    repJson.slice(1).forEach(r => {
       const k = (r?.[0] ?? '').toString().trim();
       const v = (r?.[1] ?? '').toString().trim();
-      if (k) titleDict.set(k, v);
+      if (k) repDict.set(k, v);
     });
 
-    // month シート
-    const monthSheetName = settings.rules.sheets?.month || 'month';
-    const monthSheet = wb.Sheets[monthSheetName];
-    if (!monthSheet) throw new Error(`シート '${monthSheetName}' が見つかりません`);
-    const monthJson = XLSX.utils.sheet_to_json(monthSheet, { header: 1, blankrows: false });
-    month = monthJson.slice(1).map(r => (r?.[0] ?? '').toString().trim()).filter(Boolean);
-    monthDict.clear();
-    monthJson.slice(1).forEach(r => {
-      const k = (r?.[0] ?? '').toString().trim();
-      const v = (r?.[1] ?? '').toString().trim();
-      if (k) monthDict.set(k, v);
-    });
-
-    $('#ruleStatus').textContent = `読込済み: title=${title.length}件, month=${month.length}件（Excel）`;
+    $('#ruleStatus').textContent = `読込済み: del=${eraWords.length}件, replace=${repDict.size}件（Excel）`;
     showToast('Excel からルールを読み込みました。');
     return true;
   } catch (e) {
@@ -82,7 +60,30 @@ async function loadRulesFromExcel() {
   }
 }
 
+// 既存の loadRules() は手動CSV読込用として残す
+// ↓↓↓ 既存の loadRules() はそのまま ↓↓↓
 
+// 起動時：settings を読んで自動ロードを試行
+(async () => {
+  await loadSettings();
+  if (settings?.rules?.excelUrl) {
+    // 自動読込に成功したら UI を更新、失敗時は手動CSVにフォールバック
+    const ok = await loadRulesFromExcel();
+    if (!ok) {
+      // 失敗した場合でも手動で del.csv/replace.csv を選択して「ルール読込」できます
+    }
+  }
+})();
+
+// 「ルール読込」ボタンは優先度：Excel設定→手動CSV
+$('#loadBtn').addEventListener('click', async () => {
+  if (settings?.rules?.excelUrl) {
+    const ok = await loadRulesFromExcel();
+    if (ok) return;
+  }
+  // Excel設定が無い/失敗した場合は手動CSV
+  await loadRules();
+});
 
 // 以降（変換実行など）は既存のハンドラのままでOK
 
@@ -150,7 +151,7 @@ async function loadRules() {
 
     // replace.csv
     const repRows = parseCSV(repText);
-    repDict.clear();
+    repDict = new Map();
     repRows.slice(1).forEach(r => {
       if (!r || r.length < 2) return;
       const k = (r[0] || '').trim();
@@ -251,31 +252,7 @@ async function copyToClipboard(text) {
 }
 
 // --- Wire UI ---
-// loadBtnのイベントリスナーは上で既に設定済み
-// 既存の loadRules() は手動CSV読込用として残す
-// ↓↓↓ 既存の loadRules() はそのまま ↓↓↓
-
-// 起動時：settings を読んで自動ロードを試行
-(async () => {
-  await loadSettings();
-  if (settings?.rules?.excelUrl) {
-    // 自動読込に成功したら UI を更新、失敗時は手動CSVにフォールバック
-    const ok = await loadRulesFromExcel();
-    if (!ok) {
-      // 失敗した場合でも手動で del.csv/replace.csv を選択して「ルール読込」できます
-    }
-  }
-})();
-
-// 「ルール読込」ボタンは優先度：Excel設定→手動CSV
-$('#loadBtn').addEventListener('click', async () => {
-  if (settings?.rules?.excelUrl) {
-    const ok = await loadRulesFromExcel();
-    if (ok) return;
-  }
-  // Excel設定が無い/失敗した場合は手動CSV
-  await loadRules();
-});
+$('#loadBtn').addEventListener('click', loadRules);
 
 $('#run').addEventListener('click', async () => {
   const ok = (eraWords.length || repDict.size) ? true : await loadRules();

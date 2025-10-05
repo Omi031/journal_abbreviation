@@ -2,7 +2,7 @@
   "rules": {
     "excelUrl": "rules.xlsx",
     "sheets": {
-      "journal": "journal",
+      "title": "title",
       "month": "month"
     }
   }
