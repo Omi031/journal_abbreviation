@@ -1,0 +1,8 @@
+et_al_th: 4
+cite_style: ris
+conf_with_in: false
+conf_with_proc: true
+conf_with_year: false
+jo_abb_path: "data/jo_abb.csv"
+jo_del_path: "data/jo_del.csv"
+mo_abb_path: "data/mo_abb.csv"
