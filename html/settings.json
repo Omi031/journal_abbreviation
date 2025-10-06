@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "excelUrl": "rules.xlsx",
+    "sheets": {
+      "title": "title",
+      "month": "month"
+    }
+  }
+}

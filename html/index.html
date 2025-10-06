@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文献情報フォーマッター (Web)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<script type="application/json" id="settings">
+{
+  "rules": {
+    "excelUrl": "rules.xlsx",
+    "sheets": { "del": "del", "replace": "replace" }
+  }
+}
+</script>
+
+<body>
+  <div class="app">
+    <div class="card">
+      <h1>文献情報フォーマッター（ブラウザ版）</h1>
+      <p class="sub">
+        Tkinter版のロジックをHTML+JSに移植。<span class="kbd">del.csv</span> と
+        <span class="kbd">replace.csv</span> を読み込み、TeX/Plainを選んで整形します。
+        変換結果は自動でクリップボードへコピーされます。
+      </p>
+      <div class="row" role="group" aria-label="出力形式">
+        <label class="pill"><input type="radio" name="fmt" value="tex" checked> TeX</label>
+        <label class="pill"><input type="radio" name="fmt" value="plain"> Plain</label>
+        <span class="hint">ショートカット: <span class="kbd">Ctrl/⌘+Enter</span> で変換</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="file grow">
+          <div>🧹</div>
+          <div>
+            <div><strong>del.csv</strong>（削除ワード一覧 / 1列, 先頭行ヘッダ可）</div>
+            <div class="hint small">例: <span class="mono">word</span></div>
+          </div>
+          <div>
+            <label class="btn"><input id="delFile" type="file" accept=".csv" hidden>選択</label>
+          </div>
+        </div>
+        <div class="file grow">
+          <div>🔁</div>
+          <div>
+            <div><strong>replace.csv</strong>（置換辞書 / 2列: 元, 置換後 / 先頭行ヘッダ可）</div>
+            <div class="hint small">例: <span class="mono">International, Int.</span></div>
+          </div>
+          <div>
+            <label class="btn"><input id="repFile" type="file" accept=".csv" hidden>選択</label>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="loadBtn" class="btn">ルール読込</button>
+        <span id="ruleStatus" class="hint">未読込</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="in" style="display:block; margin-bottom:8px;">元の文献情報を入力</label>
+      <textarea id="in" placeholder="著者名, &quot;タイトル&quot; ジャーナル情報 doi:..." class="mono"></textarea>
+      <div class="row" style="margin-top:10px;">
+        <button id="run" class="btn">変換実行</button>
+        <button id="clear" class="btn secondary">クリア</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="out" style="display:block; margin-bottom:8px;">変換後の文献情報（自動でコピーされます）</label>
+      <textarea id="out" class="mono" readonly></textarea>
+      <div class="row" style="margin-top:10px;">
+        <button id="copy" class="btn secondary">コピー</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>CSV 仕様と注意点</summary>
+        <ul>
+          <li><strong>del.csv:</strong> 1列のCSV。先頭行はヘッダでもOK。各行のワードが一致したら削除します。</li>
+          <li><strong>replace.csv:</strong> 2列のCSV（元, 置換後）。先頭行はヘッダでもOK。完全一致で置換し、末尾にピリオドを補います。</li>
+          <li>ワードの一致はカンマ除去後（<span class="mono">","</span> を抜いた単語）で照合します。</li>
+          <li>TeX モードでは <span class="mono">pp. a-b → pp. a--b</span>、末尾ピリオド付与、ジャーナル部を <span class="mono">\\textit{...}</span> で包み、最初のカンマ前で <span class="mono">}</span> を挿入する元実装の挙動を再現します。</li>
+          <li>入力フォーマットは <span class="mono">著者名, "タイトル" ジャーナル情報</span> を想定。</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
