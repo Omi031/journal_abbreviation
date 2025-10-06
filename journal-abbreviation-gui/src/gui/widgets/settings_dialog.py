@@ -173,7 +173,9 @@ class SettingsDialog(QDialog):
         clipboard_layout = QFormLayout()
 
         self.auto_copy_checkbox = QCheckBox()
-        self.auto_copy_checkbox.setToolTip("フォーマット後に自動的に結果をクリップボードにコピーします")
+        self.auto_copy_checkbox.setToolTip(
+            "フォーマット後に自動的に結果をクリップボードにコピーします"
+        )
         clipboard_layout.addRow("自動コピー:", self.auto_copy_checkbox)
 
         clipboard_group.setLayout(clipboard_layout)
@@ -261,7 +263,9 @@ class SettingsDialog(QDialog):
             self.output_font_size_spinbox.setValue(settings.get("output_font_size", 14))
 
             # クリップボード設定の読み込み
-            self.auto_copy_checkbox.setChecked(settings.get("auto_copy_to_clipboard", True))
+            self.auto_copy_checkbox.setChecked(
+                settings.get("auto_copy_to_clipboard", True)
+            )
 
         except Exception as e:
             QMessageBox.warning(
@@ -324,7 +328,7 @@ class SettingsDialog(QDialog):
         self.input_font_size_spinbox.setValue(12)
         self.output_font_combo.setCurrentText("Times New Roman")
         self.output_font_size_spinbox.setValue(14)
-        
+
         # クリップボード設定をデフォルトに戻す
         self.auto_copy_checkbox.setChecked(True)
 

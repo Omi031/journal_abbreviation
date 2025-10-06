@@ -307,7 +307,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Journal Abbreviation Formatter")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 850, 750)
 
         self.app = App()
 
@@ -365,19 +365,24 @@ class MainWindow(QMainWindow):
         self.input_text.setPlaceholderText(
             "例:\nTY  - JOUR\nAU  - Smith, John\nTI  - Sample Article\n..."
         )
+        # RISデータに適した高さ設定（20-30行程度）
+        self.input_text.setMinimumHeight(400)
+        self.input_text.setMaximumHeight(500)
+        # テキスト変更時に自動的に上部にスクロール
+        self.input_text.textChanged.connect(self.scroll_to_top)
         self.layout.addWidget(self.input_text)
-        
+
         # 入力部ボタン
         input_buttons_layout = QHBoxLayout()
-        
+
         self.paste_button = QPushButton("📋 クリップボードから貼り付け")
         self.paste_button.clicked.connect(self.paste_from_clipboard)
         input_buttons_layout.addWidget(self.paste_button)
-        
+
         self.clear_input_button = QPushButton("🗑️ 入力クリア")
         self.clear_input_button.clicked.connect(self.clear_input)
         input_buttons_layout.addWidget(self.clear_input_button)
-        
+
         input_buttons_layout.addStretch()  # ボタンを左寄せに
         self.layout.addLayout(input_buttons_layout)
 
@@ -392,19 +397,22 @@ class MainWindow(QMainWindow):
 
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
+        # フォーマット済み参考文献に適した高さ設定（1-7行程度）
+        self.output_text.setMinimumHeight(120)
+        self.output_text.setMaximumHeight(200)
         self.layout.addWidget(self.output_text)
-        
+
         # 出力部ボタン
         output_buttons_layout = QHBoxLayout()
-        
+
         self.copy_button = QPushButton("📋 コピー")
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         output_buttons_layout.addWidget(self.copy_button)
-        
+
         self.clear_output_button = QPushButton("🗑️ 出力クリア")
         self.clear_output_button.clicked.connect(self.clear_output)
         output_buttons_layout.addWidget(self.clear_output_button)
-        
+
         output_buttons_layout.addStretch()  # ボタンを左寄せに
         self.layout.addLayout(output_buttons_layout)
 
@@ -490,7 +498,7 @@ class MainWindow(QMainWindow):
             }}
         """
         self.output_text.setStyleSheet(output_style)
-        
+
         # クリップボードボタンのスタイル更新
         clipboard_button_style = f"""
             QPushButton {{
@@ -590,18 +598,24 @@ class MainWindow(QMainWindow):
                 self.output_text.setPlainText("Error formatting reference.")
         else:
             self.output_text.setPlainText("Error parsing input data.")
-    
+
+    def scroll_to_top(self):
+        """入力テキストエリアを自動的に上部にスクロール"""
+        cursor = self.input_text.textCursor()
+        cursor.movePosition(cursor.Start)
+        self.input_text.setTextCursor(cursor)
+
     def paste_from_clipboard(self):
         """クリップボードから貼り付け"""
         clipboard = QApplication.clipboard()
         text = clipboard.text()
         if text:
             self.input_text.setPlainText(text)
-            
+
     def clear_input(self):
         """入力をクリア"""
         self.input_text.clear()
-        
+
     def copy_to_clipboard(self):
         """出力テキストをクリップボードにコピー"""
         output_text = self.output_text.toPlainText()
@@ -609,12 +623,12 @@ class MainWindow(QMainWindow):
             self.copy_text_to_clipboard(output_text)
         else:
             QMessageBox.information(self, "情報", "コピーする内容がありません。")
-            
+
     def copy_text_to_clipboard(self, text):
         """指定したテキストをクリップボードにコピー"""
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
-        
+
     def clear_output(self):
         """出力をクリア"""
         self.output_text.clear()
