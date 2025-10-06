@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QMenuBar,
     QAction,
+    QMessageBox,
 )
 from PyQt5.QtCore import Qt
 from core.app import App
@@ -65,11 +66,26 @@ class MainWindow(QMainWindow):
         settings_action = QAction("設定(&P)...", self)
         settings_action.triggered.connect(self.open_settings)
         settings_menu.addAction(settings_action)
+        
+        settings_menu.addSeparator()
+        
+        csv_action = QAction("CSVファイル編集(&C)...", self)
+        csv_action.triggered.connect(self.open_csv_editor)
+        settings_menu.addAction(csv_action)
 
     def open_settings(self):
         """設定ダイアログを開く"""
         dialog = SettingsDialog(self.app, self)
         dialog.exec_()
+        
+    def open_csv_editor(self):
+        """CSV編集ダイアログを開く"""
+        try:
+            from gui.widgets.csv_editor_dialog import CSVEditorDialog
+            csv_editor = CSVEditorDialog(self.app, self)
+            csv_editor.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "エラー", f"CSV編集ダイアログを開けませんでした: {str(e)}")
 
     def format_reference(self):
         input_data = self.input_text.toPlainText()

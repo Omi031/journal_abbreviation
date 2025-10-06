@@ -16,6 +16,9 @@ from PyQt5.QtCore import Qt
 import yaml
 import os
 
+# CSV編集ダイアログのインポート（遅延インポートを回避するため、ここではコメントアウト）
+# from .csv_editor_dialog import CSVEditorDialog
+
 
 class SettingsDialog(QDialog):
     def __init__(self, app_instance, parent=None):
@@ -84,6 +87,11 @@ class SettingsDialog(QDialog):
 
         self.mo_abb_path_edit = QLineEdit()
         path_layout.addRow("月略語ファイル:", self.mo_abb_path_edit)
+        
+        # CSV編集ボタン
+        self.edit_csv_button = QPushButton("CSVファイルを編集...")
+        self.edit_csv_button.clicked.connect(self.open_csv_editor)
+        path_layout.addRow("", self.edit_csv_button)
 
         path_group.setLayout(path_layout)
         layout.addWidget(path_group)
@@ -188,3 +196,12 @@ class SettingsDialog(QDialog):
         self.jo_abb_path_edit.setText("data/jo_abb.csv")
         self.jo_del_path_edit.setText("data/jo_del.csv")
         self.mo_abb_path_edit.setText("data/mo_abb.csv")
+        
+    def open_csv_editor(self):
+        """CSV編集ダイアログを開く"""
+        try:
+            from .csv_editor_dialog import CSVEditorDialog
+            csv_editor = CSVEditorDialog(self.app_instance, self)
+            csv_editor.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "エラー", f"CSV編集ダイアログを開けませんでした: {str(e)}")
