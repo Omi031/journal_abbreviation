@@ -201,8 +201,8 @@ class App:
                         title + " " + journal,
                         volume,
                         number,
-                        year,
                         pages,
+                        year,
                     ]
                     if part
                 ]
@@ -214,7 +214,7 @@ class App:
             year = self.y1_formatter(data.get("Y1", ""))
 
             parts = [
-                part for part in [authors, title + " " + journal, pages, year] if part
+                part for part in [authors, title + " " + journal, year, pages] if part
             ]
         else:
             print(f"Warning: Reference type '{data['TY']}' is not supported.")
