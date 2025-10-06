@@ -8,33 +8,42 @@ from utils.file_loader import load_csv
 class App:
     def __init__(self):
         # Get the directory of the current script and navigate to project root
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.join(current_dir, "..", "..")
-        settings_path = os.path.join(project_root, "data", "settings.yml")
+        self.current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.project_root = os.path.join(self.current_dir, "..", "..")
+        self.settings_path = os.path.join(self.project_root, "data", "settings.yml")
 
-        with open(settings_path, encoding="utf-8") as yml:
+        self.load_settings()
+
+    def load_settings(self):
+        """設定を読み込む"""
+        with open(self.settings_path, encoding="utf-8") as yml:
             settings = yaml.safe_load(yml)
 
         self.et_al_th = settings.get("et_al_th", 4)
         self.cite_style = settings.get("cite_style", "ris")
+        self.format_type = settings.get("format", "tex")
         self.with_in = settings.get("conf_with_in", False)
         self.with_proc = settings.get("conf_with_proc", True)
         self.with_year = settings.get("conf_with_year", False)
 
         # Build absolute paths for CSV files
         jo_abb_path = os.path.join(
-            project_root, settings.get("jo_abb_path", "data/jo_abb.csv")
+            self.project_root, settings.get("jo_abb_path", "data/jo_abb.csv")
         )
         jo_del_path = os.path.join(
-            project_root, settings.get("jo_del_path", "data/jo_del.csv")
+            self.project_root, settings.get("jo_del_path", "data/jo_del.csv")
         )
         mo_abb_path = os.path.join(
-            project_root, settings.get("mo_abb_path", "data/mo_abb.csv")
+            self.project_root, settings.get("mo_abb_path", "data/mo_abb.csv")
         )
 
         self.jo_abb_list = load_csv(jo_abb_path)
         self.jo_del_list = load_csv(jo_del_path)
         self.mo_abb_list = load_csv(mo_abb_path)
+
+    def reload_settings(self):
+        """設定を再読み込み"""
+        self.load_settings()
 
     def make_cite_dict(self, ori):
         data = {}
