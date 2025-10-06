@@ -1,0 +1,10 @@
+jo_abb_path: jo_abb.csv
+jo_del_path: jo_del.csv
+mo_abb_path: mo_abb.csv
+
+format: tex
+cite_style: ris
+et_al_th: 4
+conf_with_in: True
+conf_with_proc: True
+conf_with_year: False
