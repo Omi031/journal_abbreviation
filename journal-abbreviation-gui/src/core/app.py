@@ -165,7 +165,7 @@ class App:
         else:
             return "doi: " + doi
 
-    def format(self, data, format="tex"):
+    def format(self, data, format="tex", year_input_callback=None):
         if data["TY"] == "JOUR":
             authors = self.au_formatter(data.get("AU", ""), format=format)
             title = self.ti_formatter(data.get("TI", ""), format=format)
@@ -179,8 +179,14 @@ class App:
             # Early access article
             if not volume and not number:
                 if not year:
-                    year = "Unknown Year"  # GUI用に変更: inputの代わりにデフォルト値
-                    year = self.y1_formatter(year)
+                    if year_input_callback:
+                        user_year = year_input_callback()
+                        if user_year:
+                            year = self.y1_formatter(user_year)
+                        else:
+                            year = "Unknown Year"
+                    else:
+                        year = "Unknown Year"
                 doi = self.do_formatter(data.get("DO", ""))
                 parts = [
                     part
