@@ -1,2 +1,4 @@
 pyperclip>=1.8.0
 PyYAML>=6.0
+PyQt5>=5.15.0
+pyinstaller>=5.0.0

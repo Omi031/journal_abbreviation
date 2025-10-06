@@ -2,22 +2,76 @@ import csv
 import re
 import yaml
 import os
+import sys
 from utils.file_loader import load_csv
+
+
+def get_resource_path(relative_path):
+    """PyInstallerパッケージ化対応のリソースパス取得"""
+    try:
+        # PyInstaller実行時の一時ディレクトリ
+        base_path = sys._MEIPASS
+        full_path = os.path.join(base_path, relative_path)
+        if os.path.exists(full_path):
+            return full_path
+    except AttributeError:
+        pass
+
+    # 通常のPython実行時または代替パス
+    # 現在のスクリプトファイルからの相対パス
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    base_path = os.path.join(current_dir, "..", "..")
+    full_path = os.path.join(base_path, relative_path)
+    if os.path.exists(full_path):
+        return full_path
+
+    # 現在の作業ディレクトリからの相対パス
+    full_path = os.path.join(os.getcwd(), relative_path)
+    if os.path.exists(full_path):
+        return full_path
+
+    # 実行ファイルのディレクトリからの相対パス
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        full_path = os.path.join(exe_dir, relative_path)
+        if os.path.exists(full_path):
+            return full_path
+
+    # デフォルトとして最初のパスを返す
+    return os.path.join(base_path, relative_path)
 
 
 class App:
     def __init__(self):
-        # Get the directory of the current script and navigate to project root
-        self.current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.project_root = os.path.join(self.current_dir, "..", "..")
-        self.settings_path = os.path.join(self.project_root, "data", "settings.yml")
+        self.settings_path = get_resource_path(os.path.join("data", "settings.yml"))
 
         self.load_settings()
 
     def load_settings(self):
         """設定を読み込む"""
-        with open(self.settings_path, encoding="utf-8") as yml:
-            settings = yaml.safe_load(yml)
+        try:
+            with open(self.settings_path, encoding="utf-8") as yml:
+                settings = yaml.safe_load(yml)
+        except FileNotFoundError as e:
+            # デフォルト設定で続行
+            settings = {
+                "et_al_th": 4,
+                "cite_style": "ris",
+                "format": "tex",
+                "conf_with_in": False,
+                "conf_with_proc": True,
+                "conf_with_year": False,
+                "ui_font_family": "Segoe UI",
+                "ui_font_size": 9,
+                "input_font_family": "Consolas",
+                "input_font_size": 9,
+                "output_font_family": "Consolas",
+                "output_font_size": 9,
+                "auto_copy_to_clipboard": True,
+                "jo_abb_path": "data/jo_abb.csv",
+                "jo_del_path": "data/jo_del.csv",
+                "mo_abb_path": "data/mo_abb.csv",
+            }
 
         self.et_al_th = settings.get("et_al_th", 4)
         self.cite_style = settings.get("cite_style", "ris")
@@ -37,20 +91,25 @@ class App:
         # クリップボード設定
         self.auto_copy_to_clipboard = settings.get("auto_copy_to_clipboard", True)
 
-        # Build absolute paths for CSV files
-        jo_abb_path = os.path.join(
-            self.project_root, settings.get("jo_abb_path", "data/jo_abb.csv")
-        )
-        jo_del_path = os.path.join(
-            self.project_root, settings.get("jo_del_path", "data/jo_del.csv")
-        )
-        mo_abb_path = os.path.join(
-            self.project_root, settings.get("mo_abb_path", "data/mo_abb.csv")
-        )
+        # Build absolute paths for CSV files using resource path function
+        jo_abb_path = get_resource_path(settings.get("jo_abb_path", "data/jo_abb.csv"))
+        jo_del_path = get_resource_path(settings.get("jo_del_path", "data/jo_del.csv"))
+        mo_abb_path = get_resource_path(settings.get("mo_abb_path", "data/mo_abb.csv"))
 
-        self.jo_abb_list = load_csv(jo_abb_path)
-        self.jo_del_list = load_csv(jo_del_path)
-        self.mo_abb_list = load_csv(mo_abb_path)
+        try:
+            self.jo_abb_list = load_csv(jo_abb_path)
+        except FileNotFoundError:
+            self.jo_abb_list = [[], []]  # 空のリストで初期化
+
+        try:
+            self.jo_del_list = load_csv(jo_del_path)
+        except FileNotFoundError:
+            self.jo_del_list = [[], []]  # 空のリストで初期化
+
+        try:
+            self.mo_abb_list = load_csv(mo_abb_path)
+        except FileNotFoundError:
+            self.mo_abb_list = [[], []]  # 空のリストで初期化
 
     def reload_settings(self):
         """設定を再読み込み"""
