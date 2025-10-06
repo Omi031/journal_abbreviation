@@ -96,6 +96,78 @@ class SettingsDialog(QDialog):
         path_group.setLayout(path_layout)
         layout.addWidget(path_group)
 
+        # フォント設定
+        font_group = QGroupBox("フォント設定")
+        font_layout = QFormLayout()
+
+        # UIフォント
+        self.ui_font_combo = QComboBox()
+        self.ui_font_combo.addItems(
+            [
+                "Segoe UI",
+                "Yu Gothic UI",
+                "メイリオ",
+                "MS UI Gothic",
+                "Arial",
+                "Helvetica",
+                "Tahoma",
+            ]
+        )
+        self.ui_font_combo.setEditable(True)
+        font_layout.addRow("UIフォント:", self.ui_font_combo)
+
+        self.ui_font_size_spinbox = QSpinBox()
+        self.ui_font_size_spinbox.setMinimum(8)
+        self.ui_font_size_spinbox.setMaximum(24)
+        self.ui_font_size_spinbox.setValue(12)
+        font_layout.addRow("UIフォントサイズ:", self.ui_font_size_spinbox)
+
+        # 入力フォント
+        self.input_font_combo = QComboBox()
+        self.input_font_combo.addItems(
+            [
+                "Consolas",
+                "Courier New",
+                "Monaco",
+                "Inconsolata",
+                "Source Code Pro",
+                "Fira Code",
+            ]
+        )
+        self.input_font_combo.setEditable(True)
+        font_layout.addRow("入力フォント:", self.input_font_combo)
+
+        self.input_font_size_spinbox = QSpinBox()
+        self.input_font_size_spinbox.setMinimum(8)
+        self.input_font_size_spinbox.setMaximum(24)
+        self.input_font_size_spinbox.setValue(12)
+        font_layout.addRow("入力フォントサイズ:", self.input_font_size_spinbox)
+
+        # 出力フォント
+        self.output_font_combo = QComboBox()
+        self.output_font_combo.addItems(
+            [
+                "Times New Roman",
+                "Yu Mincho",
+                "游明朝",
+                "MS Mincho",
+                "Georgia",
+                "Cambria",
+                "Garamond",
+            ]
+        )
+        self.output_font_combo.setEditable(True)
+        font_layout.addRow("出力フォント:", self.output_font_combo)
+
+        self.output_font_size_spinbox = QSpinBox()
+        self.output_font_size_spinbox.setMinimum(8)
+        self.output_font_size_spinbox.setMaximum(24)
+        self.output_font_size_spinbox.setValue(14)
+        font_layout.addRow("出力フォントサイズ:", self.output_font_size_spinbox)
+
+        font_group.setLayout(font_layout)
+        layout.addWidget(font_group)
+
         # ボタン
         button_layout = QHBoxLayout()
 
@@ -152,6 +224,31 @@ class SettingsDialog(QDialog):
                 settings.get("mo_abb_path", "data/mo_abb.csv")
             )
 
+            # フォント設定の読み込み
+            ui_font = settings.get("ui_font_family", "Segoe UI")
+            ui_font_index = self.ui_font_combo.findText(ui_font)
+            if ui_font_index >= 0:
+                self.ui_font_combo.setCurrentIndex(ui_font_index)
+            else:
+                self.ui_font_combo.setCurrentText(ui_font)
+            self.ui_font_size_spinbox.setValue(settings.get("ui_font_size", 12))
+
+            input_font = settings.get("input_font_family", "Consolas")
+            input_font_index = self.input_font_combo.findText(input_font)
+            if input_font_index >= 0:
+                self.input_font_combo.setCurrentIndex(input_font_index)
+            else:
+                self.input_font_combo.setCurrentText(input_font)
+            self.input_font_size_spinbox.setValue(settings.get("input_font_size", 12))
+
+            output_font = settings.get("output_font_family", "Times New Roman")
+            output_font_index = self.output_font_combo.findText(output_font)
+            if output_font_index >= 0:
+                self.output_font_combo.setCurrentIndex(output_font_index)
+            else:
+                self.output_font_combo.setCurrentText(output_font)
+            self.output_font_size_spinbox.setValue(settings.get("output_font_size", 14))
+
         except Exception as e:
             QMessageBox.warning(
                 self, "エラー", f"設定の読み込みに失敗しました: {str(e)}"
@@ -170,6 +267,13 @@ class SettingsDialog(QDialog):
                 "jo_abb_path": self.jo_abb_path_edit.text(),
                 "jo_del_path": self.jo_del_path_edit.text(),
                 "mo_abb_path": self.mo_abb_path_edit.text(),
+                # フォント設定
+                "ui_font_family": self.ui_font_combo.currentText(),
+                "ui_font_size": self.ui_font_size_spinbox.value(),
+                "input_font_family": self.input_font_combo.currentText(),
+                "input_font_size": self.input_font_size_spinbox.value(),
+                "output_font_family": self.output_font_combo.currentText(),
+                "output_font_size": self.output_font_size_spinbox.value(),
             }
 
             settings_path = self.get_settings_path()
@@ -196,6 +300,14 @@ class SettingsDialog(QDialog):
         self.jo_abb_path_edit.setText("data/jo_abb.csv")
         self.jo_del_path_edit.setText("data/jo_del.csv")
         self.mo_abb_path_edit.setText("data/mo_abb.csv")
+
+        # フォント設定をデフォルトに戻す
+        self.ui_font_combo.setCurrentText("Segoe UI")
+        self.ui_font_size_spinbox.setValue(12)
+        self.input_font_combo.setCurrentText("Consolas")
+        self.input_font_size_spinbox.setValue(12)
+        self.output_font_combo.setCurrentText("Times New Roman")
+        self.output_font_size_spinbox.setValue(14)
 
     def open_csv_editor(self):
         """CSV編集ダイアログを開く"""

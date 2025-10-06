@@ -16,8 +16,10 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QSpinBox,
     QGroupBox,
+    QApplication,
 )
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QPalette, QColor
 from core.app import App
 from gui.widgets.settings_dialog import SettingsDialog
 from datetime import datetime, timedelta
@@ -27,8 +29,33 @@ class YearMonthDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Early Access論文の年月選択")
-        self.setGeometry(300, 300, 350, 200)
+        self.setGeometry(300, 300, 400, 250)
         self.setModal(True)
+
+        # ダイアログのスタイル設定
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #f8f9fa;
+                font-family: 'Segoe UI', 'Yu Gothic UI', 'メイリオ', sans-serif;
+            }
+            QGroupBox {
+                font-size: 12px;
+                font-weight: bold;
+                color: #495057;
+                border: 2px solid #dee2e6;
+                border-radius: 8px;
+                margin: 10px 0;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 8px 0 8px;
+                background-color: #f8f9fa;
+            }
+        """
+        )
 
         self.selected_year_month = None
         self.setup_ui()
@@ -39,6 +66,17 @@ class YearMonthDialog(QDialog):
 
         # 説明ラベル
         label = QLabel("Early Access論文の年月を選択してください：")
+        label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #212529;
+                margin: 10px 0;
+                padding: 8px;
+            }
+        """
+        )
         layout.addWidget(label)
 
         # メイン選択部分をグループボックスに
@@ -52,9 +90,48 @@ class YearMonthDialog(QDialog):
         # 月選択
         month_layout = QVBoxLayout()
         month_label = QLabel("月:")
+        month_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 12px;
+                font-weight: bold;
+                color: #6c757d;
+                margin-bottom: 5px;
+            }
+        """
+        )
         month_layout.addWidget(month_label)
 
         self.month_combo = QComboBox()
+        self.month_combo.setStyleSheet(
+            """
+            QComboBox {
+                font-size: 11px;
+                padding: 8px 12px;
+                border: 2px solid #ced4da;
+                border-radius: 6px;
+                background-color: white;
+                min-height: 20px;
+            }
+            QComboBox:hover {
+                border-color: #80bdff;
+            }
+            QComboBox:focus {
+                border-color: #007bff;
+                outline: none;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #6c757d;
+            }
+        """
+        )
         months = [
             "January",
             "February",
@@ -76,9 +153,7 @@ class YearMonthDialog(QDialog):
         self.month_combo.setCurrentIndex(current_month)
 
         month_layout.addWidget(self.month_combo)
-        selection_layout.addLayout(month_layout)
-
-        # 年選択
+        selection_layout.addLayout(month_layout)  # 年選択
         year_layout = QVBoxLayout()
         year_label = QLabel("年:")
         year_layout.addWidget(year_label)
@@ -101,15 +176,35 @@ class YearMonthDialog(QDialog):
 
         # プレビュー表示
         preview_layout = QHBoxLayout()
-        preview_layout.addWidget(QLabel("プレビュー:"))
+        preview_text_label = QLabel("プレビュー:")
+        preview_text_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 12px;
+                font-weight: bold;
+                color: #6c757d;
+            }
+        """
+        )
+        preview_layout.addWidget(preview_text_label)
 
         self.preview_label = QLabel()
-        self.preview_label.setStyleSheet("font-weight: bold; color: #0066cc;")
+        self.preview_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 13px;
+                font-weight: bold;
+                color: #007bff;
+                background-color: #e7f3ff;
+                padding: 6px 12px;
+                border-radius: 4px;
+                border: 1px solid #b3d9ff;
+            }
+        """
+        )
         preview_layout.addWidget(self.preview_label)
 
-        main_layout.addLayout(preview_layout)
-
-        # 選択が変更されたときにプレビューを更新
+        main_layout.addLayout(preview_layout)  # 選択が変更されたときにプレビューを更新
         self.month_combo.currentTextChanged.connect(self.update_preview)
         self.year_spinbox.valueChanged.connect(self.update_preview)
 
@@ -125,12 +220,60 @@ class YearMonthDialog(QDialog):
 
         self.manual_input = QLineEdit()
         self.manual_input.setPlaceholderText("例: January 2024, Dec. 2023")
+        self.manual_input.setStyleSheet(
+            """
+            QLineEdit {
+                font-size: 11px;
+                padding: 10px 12px;
+                border: 2px solid #ced4da;
+                border-radius: 6px;
+                background-color: white;
+            }
+            QLineEdit:hover {
+                border-color: #80bdff;
+            }
+            QLineEdit:focus {
+                border-color: #007bff;
+                outline: none;
+            }
+        """
+        )
         manual_layout.addWidget(self.manual_input)
 
         layout.addWidget(manual_group)
 
         # OK/Cancelボタン
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.setStyleSheet(
+            """
+            QDialogButtonBox QPushButton {
+                font-size: 12px;
+                font-weight: bold;
+                padding: 10px 20px;
+                border-radius: 6px;
+                min-width: 80px;
+                margin: 5px;
+            }
+            QDialogButtonBox QPushButton[text="OK"] {
+                background-color: #007bff;
+                color: white;
+                border: 2px solid #007bff;
+            }
+            QDialogButtonBox QPushButton[text="OK"]:hover {
+                background-color: #0056b3;
+                border-color: #0056b3;
+            }
+            QDialogButtonBox QPushButton[text="Cancel"] {
+                background-color: #6c757d;
+                color: white;
+                border: 2px solid #6c757d;
+            }
+            QDialogButtonBox QPushButton[text="Cancel"]:hover {
+                background-color: #545b62;
+                border-color: #545b62;
+            }
+        """
+        )
         button_box.accepted.connect(self.accept_selection)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -164,9 +307,44 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Journal Abbreviation Formatter")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 800, 600)
 
         self.app = App()
+
+        # アプリケーション全体のスタイル設定
+        self.apply_font_settings()
+
+    def apply_font_settings(self):
+        """フォント設定を適用"""
+        ui_font = f"{self.app.ui_font_family}"
+        ui_size = self.app.ui_font_size
+        input_font = f"{self.app.input_font_family}"
+        input_size = self.app.input_font_size
+        output_font = f"{self.app.output_font_family}"
+        output_size = self.app.output_font_size
+
+        self.setStyleSheet(
+            f"""
+            QMainWindow {{
+                background-color: #f8f9fa;
+                font-family: '{ui_font}', sans-serif;
+                font-size: {ui_size}px;
+            }}
+            QMenuBar {{
+                background-color: #ffffff;
+                color: #212529;
+                border-bottom: 1px solid #dee2e6;
+                padding: 4px;
+            }}
+            QMenuBar::item {{
+                padding: 8px 16px;
+                border-radius: 4px;
+            }}
+            QMenuBar::item:selected {{
+                background-color: #e9ecef;
+            }}
+        """
+        )
 
         # メニューバーを作成
         self.create_menu_bar()
@@ -175,24 +353,115 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.layout = QVBoxLayout()
+        self.layout.setSpacing(15)
+        self.layout.setContentsMargins(20, 20, 20, 20)
         self.central_widget.setLayout(self.layout)
 
-        self.input_label = QLabel("Input the reference:")
+        # 入力部分
+        self.input_label = QLabel("RIS形式の参考文献データを入力してください:")
         self.layout.addWidget(self.input_label)
 
         self.input_text = QTextEdit()
+        self.input_text.setPlaceholderText(
+            "例:\nTY  - JOUR\nAU  - Smith, John\nTI  - Sample Article\n..."
+        )
         self.layout.addWidget(self.input_text)
 
-        self.format_button = QPushButton("Format Reference")
+        # フォーマットボタン
+        self.format_button = QPushButton("📖 Format Reference")
         self.format_button.clicked.connect(self.format_reference)
         self.layout.addWidget(self.format_button)
 
-        self.output_label = QLabel("Formatted Reference:")
+        # 出力部分
+        self.output_label = QLabel("フォーマット済み参考文献:")
         self.layout.addWidget(self.output_label)
 
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
         self.layout.addWidget(self.output_text)
+
+        # 初期フォント設定を適用
+        self.update_font_settings()
+
+    def update_font_settings(self):
+        """フォント設定を更新"""
+        ui_font = self.app.ui_font_family
+        ui_size = self.app.ui_font_size
+        input_font = self.app.input_font_family
+        input_size = self.app.input_font_size
+        output_font = self.app.output_font_family
+        output_size = self.app.output_font_size
+
+        # ラベルのスタイル更新
+        label_style = f"""
+            QLabel {{
+                font-family: '{ui_font}', sans-serif;
+                font-size: {ui_size + 2}px;
+                font-weight: bold;
+                color: #495057;
+                margin-bottom: 5px;
+            }}
+        """
+        self.input_label.setStyleSheet(label_style)
+        self.output_label.setStyleSheet(label_style)
+
+        # 入力テキストエリアのスタイル更新
+        input_style = f"""
+            QTextEdit {{
+                font-family: '{input_font}', 'Courier New', monospace;
+                font-size: {input_size}px;
+                padding: 12px;
+                border: 2px solid #ced4da;
+                border-radius: 8px;
+                background-color: white;
+                line-height: 1.4;
+            }}
+            QTextEdit:focus {{
+                border-color: #007bff;
+                outline: none;
+            }}
+        """
+        self.input_text.setStyleSheet(input_style)
+
+        # フォーマットボタンのスタイル更新
+        button_style = f"""
+            QPushButton {{
+                font-family: '{ui_font}', sans-serif;
+                font-size: {ui_size + 2}px;
+                font-weight: bold;
+                padding: 15px 30px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                min-height: 20px;
+            }}
+            QPushButton:hover {{
+                background-color: #0056b3;
+            }}
+            QPushButton:pressed {{
+                background-color: #004085;
+            }}
+        """
+        self.format_button.setStyleSheet(button_style)
+
+        # 出力テキストエリアのスタイル更新
+        output_style = f"""
+            QTextEdit {{
+                font-family: '{output_font}', 'Yu Mincho', '游明朝', serif;
+                font-size: {output_size}px;
+                padding: 12px;
+                border: 2px solid #28a745;
+                border-radius: 8px;
+                background-color: #f8fff8;
+                line-height: 1.6;
+            }}
+            QTextEdit:focus {{
+                border-color: #20c997;
+                outline: none;
+            }}
+        """
+        self.output_text.setStyleSheet(output_style)
 
     def create_menu_bar(self):
         """メニューバーを作成"""
@@ -222,7 +491,9 @@ class MainWindow(QMainWindow):
     def open_settings(self):
         """設定ダイアログを開く"""
         dialog = SettingsDialog(self.app, self)
-        dialog.exec_()
+        if dialog.exec_() == QDialog.Accepted:
+            # 設定が保存された場合、フォント設定を更新
+            self.update_font_settings()
 
     def open_csv_editor(self):
         """CSV編集ダイアログを開く"""

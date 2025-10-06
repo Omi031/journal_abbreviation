@@ -26,6 +26,14 @@ class App:
         self.with_proc = settings.get("conf_with_proc", True)
         self.with_year = settings.get("conf_with_year", False)
 
+        # フォント設定
+        self.ui_font_family = settings.get("ui_font_family", "Segoe UI")
+        self.ui_font_size = settings.get("ui_font_size", 12)
+        self.input_font_family = settings.get("input_font_family", "Consolas")
+        self.input_font_size = settings.get("input_font_size", 12)
+        self.output_font_family = settings.get("output_font_family", "Times New Roman")
+        self.output_font_size = settings.get("output_font_size", 14)
+
         # Build absolute paths for CSV files
         jo_abb_path = os.path.join(
             self.project_root, settings.get("jo_abb_path", "data/jo_abb.csv")

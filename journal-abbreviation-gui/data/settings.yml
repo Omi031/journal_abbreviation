@@ -4,6 +4,12 @@ conf_with_proc: true
 conf_with_year: false
 et_al_th: 4
 format: tex
+input_font_family: Consolas
+input_font_size: 16
 jo_abb_path: data/jo_abb.csv
 jo_del_path: data/jo_del.csv
 mo_abb_path: data/mo_abb.csv
+output_font_family: Consolas
+output_font_size: 16
+ui_font_family: Segoe UI
+ui_font_size: 16
