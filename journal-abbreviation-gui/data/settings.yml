@@ -13,3 +13,5 @@ output_font_family: Consolas
 output_font_size: 16
 ui_font_family: Segoe UI
 ui_font_size: 16
+# クリップボード設定
+auto_copy_to_clipboard: true

@@ -33,6 +33,9 @@ class App:
         self.input_font_size = settings.get("input_font_size", 12)
         self.output_font_family = settings.get("output_font_family", "Times New Roman")
         self.output_font_size = settings.get("output_font_size", 14)
+        
+        # クリップボード設定
+        self.auto_copy_to_clipboard = settings.get("auto_copy_to_clipboard", True)
 
         # Build absolute paths for CSV files
         jo_abb_path = os.path.join(
@@ -135,7 +138,6 @@ class App:
 
         if format == "tex":
             jornal = "\\textit{" + jornal + "}"
-        print(self.with_in, ty, jornal.startswith("in"))
         if ty == "CONF" and self.with_in and not jornal.startswith("in"):
             jornal = "in " + jornal
 

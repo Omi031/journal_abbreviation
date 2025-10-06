@@ -366,6 +366,20 @@ class MainWindow(QMainWindow):
             "例:\nTY  - JOUR\nAU  - Smith, John\nTI  - Sample Article\n..."
         )
         self.layout.addWidget(self.input_text)
+        
+        # 入力部ボタン
+        input_buttons_layout = QHBoxLayout()
+        
+        self.paste_button = QPushButton("📋 クリップボードから貼り付け")
+        self.paste_button.clicked.connect(self.paste_from_clipboard)
+        input_buttons_layout.addWidget(self.paste_button)
+        
+        self.clear_input_button = QPushButton("🗑️ 入力クリア")
+        self.clear_input_button.clicked.connect(self.clear_input)
+        input_buttons_layout.addWidget(self.clear_input_button)
+        
+        input_buttons_layout.addStretch()  # ボタンを左寄せに
+        self.layout.addLayout(input_buttons_layout)
 
         # フォーマットボタン
         self.format_button = QPushButton("📖 Format Reference")
@@ -379,6 +393,20 @@ class MainWindow(QMainWindow):
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
         self.layout.addWidget(self.output_text)
+        
+        # 出力部ボタン
+        output_buttons_layout = QHBoxLayout()
+        
+        self.copy_button = QPushButton("📋 コピー")
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
+        output_buttons_layout.addWidget(self.copy_button)
+        
+        self.clear_output_button = QPushButton("🗑️ 出力クリア")
+        self.clear_output_button.clicked.connect(self.clear_output)
+        output_buttons_layout.addWidget(self.clear_output_button)
+        
+        output_buttons_layout.addStretch()  # ボタンを左寄せに
+        self.layout.addLayout(output_buttons_layout)
 
         # 初期フォント設定を適用
         self.update_font_settings()
@@ -462,6 +490,30 @@ class MainWindow(QMainWindow):
             }}
         """
         self.output_text.setStyleSheet(output_style)
+        
+        # クリップボードボタンのスタイル更新
+        clipboard_button_style = f"""
+            QPushButton {{
+                font-family: '{ui_font}', sans-serif;
+                font-size: {ui_size}px;
+                padding: 8px 16px;
+                background-color: #6c757d;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                margin: 2px;
+            }}
+            QPushButton:hover {{
+                background-color: #5a6268;
+            }}
+            QPushButton:pressed {{
+                background-color: #495057;
+            }}
+        """
+        self.paste_button.setStyleSheet(clipboard_button_style)
+        self.clear_input_button.setStyleSheet(clipboard_button_style)
+        self.copy_button.setStyleSheet(clipboard_button_style)
+        self.clear_output_button.setStyleSheet(clipboard_button_style)
 
     def create_menu_bar(self):
         """メニューバーを作成"""
@@ -531,7 +583,38 @@ class MainWindow(QMainWindow):
             )
             if formatted_data:
                 self.output_text.setPlainText(formatted_data)
+                # 自動コピー機能
+                if self.app.auto_copy_to_clipboard:
+                    self.copy_text_to_clipboard(formatted_data)
             else:
                 self.output_text.setPlainText("Error formatting reference.")
         else:
             self.output_text.setPlainText("Error parsing input data.")
+    
+    def paste_from_clipboard(self):
+        """クリップボードから貼り付け"""
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        if text:
+            self.input_text.setPlainText(text)
+            
+    def clear_input(self):
+        """入力をクリア"""
+        self.input_text.clear()
+        
+    def copy_to_clipboard(self):
+        """出力テキストをクリップボードにコピー"""
+        output_text = self.output_text.toPlainText()
+        if output_text:
+            self.copy_text_to_clipboard(output_text)
+        else:
+            QMessageBox.information(self, "情報", "コピーする内容がありません。")
+            
+    def copy_text_to_clipboard(self, text):
+        """指定したテキストをクリップボードにコピー"""
+        clipboard = QApplication.clipboard()
+        clipboard.setText(text)
+        
+    def clear_output(self):
+        """出力をクリア"""
+        self.output_text.clear()

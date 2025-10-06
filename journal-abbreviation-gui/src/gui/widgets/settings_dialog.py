@@ -168,6 +168,17 @@ class SettingsDialog(QDialog):
         font_group.setLayout(font_layout)
         layout.addWidget(font_group)
 
+        # クリップボード設定
+        clipboard_group = QGroupBox("クリップボード設定")
+        clipboard_layout = QFormLayout()
+
+        self.auto_copy_checkbox = QCheckBox()
+        self.auto_copy_checkbox.setToolTip("フォーマット後に自動的に結果をクリップボードにコピーします")
+        clipboard_layout.addRow("自動コピー:", self.auto_copy_checkbox)
+
+        clipboard_group.setLayout(clipboard_layout)
+        layout.addWidget(clipboard_group)
+
         # ボタン
         button_layout = QHBoxLayout()
 
@@ -249,6 +260,9 @@ class SettingsDialog(QDialog):
                 self.output_font_combo.setCurrentText(output_font)
             self.output_font_size_spinbox.setValue(settings.get("output_font_size", 14))
 
+            # クリップボード設定の読み込み
+            self.auto_copy_checkbox.setChecked(settings.get("auto_copy_to_clipboard", True))
+
         except Exception as e:
             QMessageBox.warning(
                 self, "エラー", f"設定の読み込みに失敗しました: {str(e)}"
@@ -274,6 +288,8 @@ class SettingsDialog(QDialog):
                 "input_font_size": self.input_font_size_spinbox.value(),
                 "output_font_family": self.output_font_combo.currentText(),
                 "output_font_size": self.output_font_size_spinbox.value(),
+                # クリップボード設定
+                "auto_copy_to_clipboard": self.auto_copy_checkbox.isChecked(),
             }
 
             settings_path = self.get_settings_path()
@@ -308,6 +324,9 @@ class SettingsDialog(QDialog):
         self.input_font_size_spinbox.setValue(12)
         self.output_font_combo.setCurrentText("Times New Roman")
         self.output_font_size_spinbox.setValue(14)
+        
+        # クリップボード設定をデフォルトに戻す
+        self.auto_copy_checkbox.setChecked(True)
 
     def open_csv_editor(self):
         """CSV編集ダイアログを開く"""
