@@ -20,12 +20,13 @@ import os
 
 
 class CSVEditorDialog(QDialog):
-    def __init__(self, app_instance, parent=None):
+    def __init__(self, app_instance, parent=None, specific_file=None):
         super().__init__(parent)
         self.app_instance = app_instance
         self.setWindowTitle("CSVファイル編集")
         self.setGeometry(200, 200, 800, 600)
         self.setModal(True)
+        self.specific_file = specific_file
 
         self.current_csv_path = ""
         self.csv_data = []
@@ -50,6 +51,7 @@ class CSVEditorDialog(QDialog):
                 "ジャーナル略語 (jo_abb.csv)",
                 "ジャーナル削除 (jo_del.csv)",
                 "月略語 (mo_abb.csv)",
+                "固有名詞 (proper_nouns.csv)",
             ]
         )
         self.file_combo.currentTextChanged.connect(self.load_selected_csv)
@@ -146,6 +148,10 @@ class CSVEditorDialog(QDialog):
 
         layout.addLayout(button_layout)
 
+        # 特定ファイルが指定された場合はそれを選択
+        if self.specific_file and "proper_nouns.csv" in self.specific_file:
+            self.file_combo.setCurrentText("固有名詞 (proper_nouns.csv)")
+
         # 初期ファイルを読み込み
         self.load_selected_csv()
 
@@ -160,6 +166,8 @@ class CSVEditorDialog(QDialog):
             return os.path.join(project_root, "data", "jo_del.csv")
         elif file_type == "月略語 (mo_abb.csv)":
             return os.path.join(project_root, "data", "mo_abb.csv")
+        elif file_type == "固有名詞 (proper_nouns.csv)":
+            return os.path.join(project_root, "data", "proper_nouns.csv")
         else:
             return ""
 
@@ -195,6 +203,17 @@ class CSVEditorDialog(QDialog):
             self.add_form_group.setTitle("削除する単語を追加")
             self.original_word_edit.setPlaceholderText("削除する単語を入力...")
             self.add_form_layout.addWidget(QLabel("削除する単語:"))
+            self.add_form_layout.addWidget(self.original_word_edit)
+            self.add_pair_button.setText("追加")
+            self.add_form_layout.addWidget(self.add_pair_button)
+
+            # 略語フィールドを非表示
+            self.abbreviation_edit.hide()
+        elif file_type == "固有名詞 (proper_nouns.csv)":
+            # 固有名詞のみの1列形式
+            self.add_form_group.setTitle("固有名詞を追加")
+            self.original_word_edit.setPlaceholderText("固有名詞を入力...")
+            self.add_form_layout.addWidget(QLabel("固有名詞:"))
             self.add_form_layout.addWidget(self.original_word_edit)
             self.add_pair_button.setText("追加")
             self.add_form_layout.addWidget(self.add_pair_button)
@@ -276,7 +295,10 @@ class CSVEditorDialog(QDialog):
         self.is_processing = False
         # フォーカスを適切な入力フィールドに戻す
         file_type = self.file_combo.currentText()
-        if file_type == "ジャーナル削除 (jo_del.csv)":
+        if (
+            file_type == "ジャーナル削除 (jo_del.csv)"
+            or file_type == "固有名詞 (proper_nouns.csv)"
+        ):
             self.original_word_edit.setFocus()
         else:
             self.original_word_edit.setFocus()
@@ -294,22 +316,32 @@ class CSVEditorDialog(QDialog):
                     QMessageBox.warning(
                         self, "警告", "削除する単語を入力してください。"
                     )
+                elif file_type == "固有名詞 (proper_nouns.csv)":
+                    QMessageBox.warning(self, "警告", "固有名詞を入力してください。")
                 else:
                     QMessageBox.warning(self, "警告", "元の単語を入力してください。")
                 return
 
-            if file_type == "ジャーナル削除 (jo_del.csv)":
-                # 削除単語ファイルの場合（1列形式）
+            if (
+                file_type == "ジャーナル削除 (jo_del.csv)"
+                or file_type == "固有名詞 (proper_nouns.csv)"
+            ):
+                # 1列形式（削除単語または固有名詞）
                 # 既存の単語がないかチェック
                 for row_idx in range(1, len(self.csv_data)):  # ヘッダー行をスキップ
                     if (
                         len(self.csv_data[row_idx]) > 0
                         and self.csv_data[row_idx][0] == original_word
                     ):
+                        message_type = (
+                            "削除リスト"
+                            if file_type == "ジャーナル削除 (jo_del.csv)"
+                            else "固有名詞リスト"
+                        )
                         QMessageBox.information(
                             self,
                             "情報",
-                            f"「{original_word}」は既に削除リストに含まれています。",
+                            f"「{original_word}」は既に{message_type}に含まれています。",
                         )
                         return
 
@@ -324,7 +356,12 @@ class CSVEditorDialog(QDialog):
                 self.original_word_edit.clear()
 
                 # 成功メッセージを表示
-                QMessageBox.information(self, "成功", "削除する単語が追加されました。")
+                success_message = (
+                    "固有名詞が追加されました。"
+                    if file_type == "固有名詞 (proper_nouns.csv)"
+                    else "削除する単語が追加されました。"
+                )
+                QMessageBox.information(self, "成功", success_message)
             else:
                 # 通常の2列形式（元の単語と略語）
                 abbreviation = self.abbreviation_edit.text().strip()
@@ -418,6 +455,15 @@ class CSVEditorDialog(QDialog):
                 QMessageBox.Yes | QMessageBox.No,
             )
             success_message = "削除単語が削除されました。"
+        elif file_type == "固有名詞 (proper_nouns.csv)":
+            # 固有名詞ファイルの場合
+            reply = QMessageBox.question(
+                self,
+                "確認",
+                f"以下の固有名詞を削除しますか？\n\n固有名詞: {original_word}",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            success_message = "固有名詞が削除されました。"
         else:
             # 通常の2列形式の場合
             abbreviation = (
@@ -554,6 +600,7 @@ class CSVEditorDialog(QDialog):
             "ジャーナル略語 (jo_abb.csv)": "ジャーナル名とその略語を管理します。\n例: 「Journal of Example」→「JoE」",
             "ジャーナル削除 (jo_del.csv)": "ジャーナル名から削除する単語を管理します（1列形式）。\n例: 「the」「international」「of」などの不要な単語",
             "月略語 (mo_abb.csv)": "月名とその略語を管理します。\n例: 「January」→「Jan」",
+            "固有名詞 (proper_nouns.csv)": "タイトルケース変換で保持する固有名詞を管理します（1列形式）。\n例: 「IoT」「CNN」「OFDM」「COVID-19」などの技術用語・固有名詞",
         }
 
         description = descriptions.get(

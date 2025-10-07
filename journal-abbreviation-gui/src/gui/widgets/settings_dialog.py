@@ -117,10 +117,20 @@ class SettingsDialog(QDialog):
         self.mo_abb_path_edit = QLineEdit()
         path_layout.addRow("月略語ファイル:", self.mo_abb_path_edit)
 
+        self.proper_nouns_path_edit = QLineEdit()
+        path_layout.addRow("固有名詞ファイル:", self.proper_nouns_path_edit)
+
         # CSV編集ボタン
         self.edit_csv_button = QPushButton("CSVファイルを編集...")
         self.edit_csv_button.clicked.connect(self.open_csv_editor)
         path_layout.addRow("", self.edit_csv_button)
+
+        # 固有名詞編集専用ボタン
+        self.edit_proper_nouns_path_button = QPushButton("固有名詞辞書を編集...")
+        self.edit_proper_nouns_path_button.clicked.connect(
+            self.open_proper_nouns_editor
+        )
+        path_layout.addRow("", self.edit_proper_nouns_path_button)
 
         path_group.setLayout(path_layout)
         layout.addWidget(path_group)
@@ -273,6 +283,9 @@ class SettingsDialog(QDialog):
             self.mo_abb_path_edit.setText(
                 settings.get("mo_abb_path", "data/mo_abb.csv")
             )
+            self.proper_nouns_path_edit.setText(
+                settings.get("proper_nouns_path", "data/proper_nouns.csv")
+            )
 
             # フォント設定の読み込み
             ui_font = settings.get("ui_font_family", "Segoe UI")
@@ -324,7 +337,7 @@ class SettingsDialog(QDialog):
                 "jo_abb_path": self.jo_abb_path_edit.text(),
                 "jo_del_path": self.jo_del_path_edit.text(),
                 "mo_abb_path": self.mo_abb_path_edit.text(),
-                "proper_nouns_path": "data/proper_nouns.csv",
+                "proper_nouns_path": self.proper_nouns_path_edit.text(),
                 # フォント設定
                 "ui_font_family": self.ui_font_combo.currentText(),
                 "ui_font_size": self.ui_font_size_spinbox.value(),
@@ -357,9 +370,12 @@ class SettingsDialog(QDialog):
         self.with_in_checkbox.setChecked(False)
         self.with_proc_checkbox.setChecked(True)
         self.with_year_checkbox.setChecked(False)
+        self.title_case_checkbox.setChecked(True)
+        self.auto_detect_checkbox.setChecked(True)
         self.jo_abb_path_edit.setText("data/jo_abb.csv")
         self.jo_del_path_edit.setText("data/jo_del.csv")
         self.mo_abb_path_edit.setText("data/mo_abb.csv")
+        self.proper_nouns_path_edit.setText("data/proper_nouns.csv")
 
         # フォント設定をデフォルトに戻す
         self.ui_font_combo.setCurrentText("Segoe UI")
