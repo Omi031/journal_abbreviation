@@ -310,18 +310,22 @@ class DictionaryEditor {
             switch (this.currentView) {
                 case 'journalAbb':
                     this.dataManager.removeJournalAbbreviation(item.original);
+                    this.showNotification(`雑誌略語「${item.original}」→「${item.abbreviation}」を削除しました`, 'success');
                     break;
                 case 'monthAbb':
                     this.dataManager.removeMonthAbbreviation(item.original);
+                    this.showNotification(`月略語「${item.original}」→「${item.abbreviation}」を削除しました`, 'success');
                     break;
             }
         } else {
             switch (this.currentView) {
                 case 'deletionWords':
                     this.dataManager.removeDeletionWord(item.word);
+                    this.showNotification(`削除語「${item.word}」を削除しました`, 'success');
                     break;
                 case 'properNouns':
                     this.dataManager.removeProperNoun(item.word);
+                    this.showNotification(`固有名詞「${item.word}」を削除しました`, 'success');
                     break;
             }
         }
@@ -344,6 +348,34 @@ class DictionaryEditor {
             return;
         }
         
+        // Check if the original word already exists
+        let existingAbbreviation = null;
+        let shouldProceed = true;
+        
+        switch (this.currentView) {
+            case 'journalAbb':
+                const journalData = this.dataManager.getAllData();
+                if (journalData.journalAbbreviations[original]) {
+                    existingAbbreviation = journalData.journalAbbreviations[original];
+                }
+                break;
+            case 'monthAbb':
+                const monthData = this.dataManager.getAllData();
+                if (monthData.monthAbbreviations[original]) {
+                    existingAbbreviation = monthData.monthAbbreviations[original];
+                }
+                break;
+        }
+        
+        if (existingAbbreviation) {
+            const confirmMessage = `「${original}」は既に「${existingAbbreviation}」として登録されています。\n「${abbreviation}」で上書きしますか？`;
+            shouldProceed = confirm(confirmMessage);
+        }
+        
+        if (!shouldProceed) {
+            return;
+        }
+        
         switch (this.currentView) {
             case 'journalAbb':
                 this.dataManager.addJournalAbbreviation(original, abbreviation);
@@ -351,6 +383,14 @@ class DictionaryEditor {
             case 'monthAbb':
                 this.dataManager.addMonthAbbreviation(original, abbreviation);
                 break;
+        }
+        
+        // Show success notification
+        try {
+            const actionText = existingAbbreviation ? '更新' : '追加';
+            this.showNotification(`「${original}」→「${abbreviation}」を${actionText}しました`, 'success');
+        } catch (error) {
+            console.error('Notification error:', error);
         }
         
         originalInput.value = '';
@@ -372,6 +412,29 @@ class DictionaryEditor {
             return;
         }
         
+        // Check if the word already exists
+        let alreadyExists = false;
+        let shouldProceed = true;
+        
+        const allData = this.dataManager.getAllData();
+        switch (this.currentView) {
+            case 'deletionWords':
+                alreadyExists = allData.deletionWords.includes(word);
+                break;
+            case 'properNouns':
+                alreadyExists = allData.properNouns.includes(word);
+                break;
+        }
+        
+        if (alreadyExists) {
+            const confirmMessage = `「${word}」は既に登録されています。\n重複登録を続行しますか？`;
+            shouldProceed = confirm(confirmMessage);
+        }
+        
+        if (!shouldProceed) {
+            return;
+        }
+        
         switch (this.currentView) {
             case 'deletionWords':
                 this.dataManager.addDeletionWord(word);
@@ -379,6 +442,15 @@ class DictionaryEditor {
             case 'properNouns':
                 this.dataManager.addProperNoun(word);
                 break;
+        }
+        
+        // Show success notification
+        try {
+            const actionText = alreadyExists ? '重複追加' : '追加';
+            const categoryText = this.currentView === 'deletionWords' ? '削除語' : '固有名詞';
+            this.showNotification(`${categoryText}「${word}」を${actionText}しました`, 'success');
+        } catch (error) {
+            console.error('Notification error:', error);
         }
         
         wordInput.value = '';
@@ -461,7 +533,7 @@ class DictionaryEditor {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        alert('辞書データをエクスポートしました。');
+        this.showNotification('辞書データをエクスポートしました', 'success');
     }
     
     /**
@@ -482,24 +554,24 @@ class DictionaryEditor {
                 if (file.name.endsWith('.json')) {
                     const data = JSON.parse(text);
                     if (this.dataManager.importData(data)) {
-                        alert('辞書データをインポートしました。');
+                        this.showNotification('辞書データをインポートしました', 'success');
                         this.refreshView();
                     } else {
-                        alert('インポートに失敗しました。ファイル形式を確認してください。');
+                        this.showNotification('インポートに失敗しました。ファイル形式を確認してください', 'error');
                     }
                 } else if (file.name.endsWith('.csv')) {
                     // CSV import for backward compatibility
                     const csvType = this.getCsvTypeFromView();
                     if (this.dataManager.importFromCSV(csvType, text)) {
-                        alert('CSVファイルをインポートしました。');
+                        this.showNotification('CSVファイルをインポートしました', 'success');
                         this.refreshView();
                     } else {
-                        alert('CSVインポートに失敗しました。');
+                        this.showNotification('CSVインポートに失敗しました', 'error');
                     }
                 }
             } catch (error) {
                 console.error('Import error:', error);
-                alert('ファイルの読み込みに失敗しました。');
+                this.showNotification('ファイルの読み込みに失敗しました', 'error');
             }
         });
         
@@ -545,6 +617,123 @@ class DictionaryEditor {
         });
     }
     
+    /**
+     * Show notification popup
+     * @param {string} message - Notification message
+     * @param {string} type - Notification type ('success', 'error', 'info')
+     */
+    showNotification(message, type = 'info') {
+        // Create notification popup
+        const notification = document.createElement('div');
+        notification.className = `notification-popup notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${this.getNotificationIcon(type)}</span>
+                <span class="notification-message">${this.escapeHtml(message)}</span>
+            </div>
+        `;
+        
+        // Add styles if not already added
+        this.addNotificationStyles();
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    /**
+     * Get icon for notification type
+     * @param {string} type - Notification type
+     * @returns {string} Icon
+     */
+    getNotificationIcon(type) {
+        switch (type) {
+            case 'success': return '✅';
+            case 'error': return '❌';
+            case 'warning': return '⚠️';
+            default: return 'ℹ️';
+        }
+    }
+    
+    /**
+     * Add notification styles to page
+     */
+    addNotificationStyles() {
+        if (document.getElementById('notification-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            .notification-popup {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                padding: 16px;
+                max-width: 400px;
+                z-index: 10000;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                border-left: 4px solid #ccc;
+            }
+            
+            .notification-popup.show {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            
+            .notification-popup.notification-success {
+                border-left-color: #4CAF50;
+            }
+            
+            .notification-popup.notification-error {
+                border-left-color: #f44336;
+            }
+            
+            .notification-popup.notification-warning {
+                border-left-color: #ff9800;
+            }
+            
+            .notification-popup.notification-info {
+                border-left-color: #2196F3;
+            }
+            
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .notification-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+            
+            .notification-message {
+                font-size: 14px;
+                color: #333;
+                line-height: 1.4;
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+
     /**
      * Escape HTML content
      * @param {string} text - Text to escape

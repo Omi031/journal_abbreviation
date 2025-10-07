@@ -8,6 +8,98 @@ class JournalAbbreviationApp {
         
         // Initialize the application
         this.init();
+        
+        // Add notification styles
+        this.addNotificationStyles();
+    }
+    
+    /**
+     * Show notification popup
+     */
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        const icon = this.getNotificationIcon(type);
+        notification.innerHTML = `<span class="notification-icon">${icon}</span><span class="notification-message">${message}</span>`;
+        
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    /**
+     * Get icon for notification type
+     */
+    getNotificationIcon(type) {
+        const icons = {
+            'success': '✅',
+            'error': '❌',
+            'warning': '⚠️',
+            'info': 'ℹ️'
+        };
+        return icons[type] || icons['info'];
+    }
+    
+    /**
+     * Add notification styles to the page
+     */
+    addNotificationStyles() {
+        if (document.getElementById('notification-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 12px 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                min-width: 250px;
+                max-width: 400px;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .notification.show {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            .notification-success { border-left: 4px solid #10b981; }
+            .notification-error { border-left: 4px solid #ef4444; }
+            .notification-warning { border-left: 4px solid #f59e0b; }
+            .notification-info { border-left: 4px solid #3b82f6; }
+            .notification-icon {
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+            .notification-message {
+                flex: 1;
+                word-break: break-word;
+            }
+        `;
+        document.head.appendChild(style);
     }
     
     /**
@@ -276,6 +368,7 @@ class JournalAbbreviationApp {
                 const modeText = settings.processing_mode === 'journal-only' ? '雑誌名' : 'RIS形式のデータ';
                 outputText.value = `フォーマット可能な文献が見つかりませんでした。\n\n${modeText}を入力してください。`;
                 this.updateStatus('フォーマット可能な文献が見つかりません', 'warning');
+                this.showNotification(`フォーマット可能な文献が見つかりませんでした。${modeText}を入力してください。`, 'warning');
                 return;
             }
             
@@ -316,7 +409,7 @@ class JournalAbbreviationApp {
                 await this.copyToClipboard(true);
             }
             
-            // Update status
+            // Update status and show notification
             const successCount = successResults.length;
             const errorCount = errorResults.length;
             this.updateStatus(
@@ -324,10 +417,22 @@ class JournalAbbreviationApp {
                 errorCount > 0 ? 'warning' : 'success'
             );
             
+            // Show notification
+            if (successCount > 0 && errorCount === 0) {
+                this.showNotification(`${successCount}件の文献をフォーマットしました`, 'success');
+            } else if (successCount > 0 && errorCount > 0) {
+                this.showNotification(`${successCount}件成功、${errorCount}件エラー`, 'warning');
+            } else {
+                const settings = this.settingsManager.getSettings();
+                const modeText = settings.processing_mode === 'journal-only' ? '雑誌名' : 'RIS形式のデータ';
+                this.showNotification(`フォーマット可能な文献が見つかりませんでした。${modeText}を入力してください。`, 'warning');
+            }
+            
         } catch (error) {
             console.error('Format error:', error);
             outputText.value = `エラーが発生しました: ${error.message}\n\n入力データの形式を確認してください。`;
             this.updateStatus(`フォーマットエラー: ${error.message}`, 'error');
+            this.showNotification(`フォーマットエラー: ${error.message}`, 'error');
             
         } finally {
             formatButton.classList.remove('format-processing');
@@ -350,6 +455,7 @@ class JournalAbbreviationApp {
         }
         
         this.updateStatus('入力・出力をクリアしました', 'info');
+        this.showNotification('入力・出力をクリアしました', 'info');
     }
     
     /**
@@ -508,6 +614,7 @@ class JournalAbbreviationApp {
         if (!outputText || !outputText.value.trim()) {
             if (!silent) {
                 this.updateStatus('コピーするテキストがありません', 'warning');
+                this.showNotification('コピーするテキストがありません', 'warning');
             }
             return;
         }
@@ -521,6 +628,7 @@ class JournalAbbreviationApp {
                 textToCopy.startsWith('エラーが発生しました')) {
                 if (!silent) {
                     this.updateStatus('コピー可能な結果がありません', 'warning');
+                    this.showNotification('コピー可能な結果がありません', 'warning');
                 }
                 return;
             }
@@ -529,12 +637,14 @@ class JournalAbbreviationApp {
             
             if (!silent) {
                 this.updateStatus('クリップボードにコピーしました', 'success');
+                this.showNotification('クリップボードにコピーしました', 'success');
             }
             
         } catch (error) {
             console.error('Copy to clipboard failed:', error);
             if (!silent) {
                 this.updateStatus('クリップボードへのコピーに失敗', 'error');
+                this.showNotification('クリップボードへのコピーに失敗しました', 'error');
             }
         }
     }

@@ -24,13 +24,11 @@ class DataManager {
             'Proceedings': 'Proc',
             'Research': 'Res',
             'Science': 'Sci',
-            'Signal': 'Signal',
             'Society': 'Soc',
             'System': 'Syst',
             'Systems': 'Syst',
             'Technology': 'Technol',
-            'Vehicular': 'Veh',
-            'Wireless': 'Wireless'
+            'Vehicular': 'Veh'
         };
         
         // Default deletion words (built-in data)
@@ -44,7 +42,6 @@ class DataManager {
             'February': 'Feb',
             'March': 'Mar',
             'April': 'Apr',
-            'May': 'May',
             'June': 'Jun',
             'July': 'Jul',
             'August': 'Aug',
@@ -135,7 +132,20 @@ class DataManager {
             properNouns: new Set(this.currentData.properNouns)
         };
     }
-    
+
+    /**
+     * Get all current data (for dictionary editor)
+     * @returns {Object} Current data object
+     */
+    getAllData() {
+        return {
+            journalAbbreviations: { ...this.currentData.journalAbbreviations },
+            deletionWords: [...this.currentData.deletionWords],
+            monthAbbreviations: { ...this.currentData.monthAbbreviations },
+            properNouns: [...this.currentData.properNouns]
+        };
+    }
+
     /**
      * Add or update journal abbreviation
      * @param {string} original - Original journal name/word

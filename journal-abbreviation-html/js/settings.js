@@ -21,6 +21,98 @@ class SettingsManager {
         };
         
         this.currentSettings = { ...this.defaultSettings };
+        
+        // Add notification styles
+        this.addNotificationStyles();
+    }
+    
+    /**
+     * Show notification popup
+     */
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        
+        const icon = this.getNotificationIcon(type);
+        notification.innerHTML = `<span class="notification-icon">${icon}</span><span class="notification-message">${message}</span>`;
+        
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    /**
+     * Get icon for notification type
+     */
+    getNotificationIcon(type) {
+        const icons = {
+            'success': '✅',
+            'error': '❌',
+            'warning': '⚠️',
+            'info': 'ℹ️'
+        };
+        return icons[type] || icons['info'];
+    }
+    
+    /**
+     * Add notification styles to the page
+     */
+    addNotificationStyles() {
+        if (document.getElementById('notification-styles-settings')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'notification-styles-settings';
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 12px 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                min-width: 250px;
+                max-width: 400px;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .notification.show {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            .notification-success { border-left: 4px solid #10b981; }
+            .notification-error { border-left: 4px solid #ef4444; }
+            .notification-warning { border-left: 4px solid #f59e0b; }
+            .notification-info { border-left: 4px solid #3b82f6; }
+            .notification-icon {
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+            .notification-message {
+                flex: 1;
+                word-break: break-word;
+            }
+        `;
+        document.head.appendChild(style);
     }
     
     /**
@@ -63,6 +155,8 @@ class SettingsManager {
      */
     updateSetting(key, value) {
         this.currentSettings[key] = value;
+        // Auto-save settings
+        this.saveSettings();
     }
     
     /**
@@ -299,7 +393,6 @@ class SettingsManager {
             if (element) {
                 element.addEventListener('change', () => {
                     this.readSettingsFromUI();
-                    this.saveSettings();
                     
                     // Apply font settings if needed
                     if (['input-font-size', 'output-font-size', 'ui-font-size'].includes(elementId)) {
@@ -332,8 +425,10 @@ class SettingsManager {
                         try {
                             await this.importSettings(file);
                             this.showMessage('設定を正常に読み込みました', 'success');
+                            this.showNotification('設定を正常に読み込みました', 'success');
                         } catch (error) {
                             this.showMessage(`設定の読み込みに失敗しました: ${error.message}`, 'error');
+                            this.showNotification(`設定の読み込みに失敗しました: ${error.message}`, 'error');
                         }
                     }
                 });
@@ -346,6 +441,7 @@ class SettingsManager {
             saveSettingsBtn.addEventListener('click', () => {
                 this.exportSettings();
                 this.showMessage('設定をダウンロードしました', 'success');
+                this.showNotification('設定ファイルをダウンロードしました', 'success');
             });
         }
     }
