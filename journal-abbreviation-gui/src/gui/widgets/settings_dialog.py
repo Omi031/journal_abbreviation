@@ -75,6 +75,35 @@ class SettingsDialog(QDialog):
         conference_group.setLayout(conference_layout)
         layout.addWidget(conference_group)
 
+        # テキスト処理設定
+        text_processing_group = QGroupBox("テキスト処理設定")
+        text_processing_layout = QFormLayout()
+
+        self.title_case_checkbox = QCheckBox()
+        self.title_case_checkbox.setToolTip(
+            '記事タイトルの大文字小文字を変換します\n（例: "DEEP LEARNING" → "Deep learning"）\n固有名詞（6G, OFDM等）は保持されます'
+        )
+        text_processing_layout.addRow(
+            "タイトルケース変換を行う:", self.title_case_checkbox
+        )
+
+        self.auto_detect_checkbox = QCheckBox()
+        self.auto_detect_checkbox.setToolTip(
+            "固有名詞辞書にない単語も自動で固有名詞として判定します\n（例: 全大文字の略語、数字+文字の組み合わせ等）"
+        )
+        text_processing_layout.addRow("固有名詞を自動判定:", self.auto_detect_checkbox)
+
+        # 固有名詞編集ボタン
+        self.edit_proper_nouns_button = QPushButton("固有名詞辞書を編集...")
+        self.edit_proper_nouns_button.clicked.connect(self.open_proper_nouns_editor)
+        self.edit_proper_nouns_button.setToolTip(
+            "タイトルケース変換で保持される固有名詞を編集します"
+        )
+        text_processing_layout.addRow("", self.edit_proper_nouns_button)
+
+        text_processing_group.setLayout(text_processing_layout)
+        layout.addWidget(text_processing_group)
+
         # ファイルパス設定
         path_group = QGroupBox("データファイルパス")
         path_layout = QFormLayout()
@@ -227,6 +256,14 @@ class SettingsDialog(QDialog):
             self.with_proc_checkbox.setChecked(settings.get("conf_with_proc", True))
             self.with_year_checkbox.setChecked(settings.get("conf_with_year", False))
 
+            # タイトルケース変換設定の読み込み
+            self.title_case_checkbox.setChecked(
+                settings.get("title_case_conversion", True)
+            )
+            self.auto_detect_checkbox.setChecked(
+                settings.get("auto_detect_proper_nouns", True)
+            )
+
             self.jo_abb_path_edit.setText(
                 settings.get("jo_abb_path", "data/jo_abb.csv")
             )
@@ -282,9 +319,12 @@ class SettingsDialog(QDialog):
                 "conf_with_in": self.with_in_checkbox.isChecked(),
                 "conf_with_proc": self.with_proc_checkbox.isChecked(),
                 "conf_with_year": self.with_year_checkbox.isChecked(),
+                "title_case_conversion": self.title_case_checkbox.isChecked(),
+                "auto_detect_proper_nouns": self.auto_detect_checkbox.isChecked(),
                 "jo_abb_path": self.jo_abb_path_edit.text(),
                 "jo_del_path": self.jo_del_path_edit.text(),
                 "mo_abb_path": self.mo_abb_path_edit.text(),
+                "proper_nouns_path": "data/proper_nouns.csv",
                 # フォント設定
                 "ui_font_family": self.ui_font_combo.currentText(),
                 "ui_font_size": self.ui_font_size_spinbox.value(),
@@ -342,4 +382,24 @@ class SettingsDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(
                 self, "エラー", f"CSV編集ダイアログを開けませんでした: {str(e)}"
+            )
+
+    def open_proper_nouns_editor(self):
+        """固有名詞CSV編集ダイアログを開く"""
+        try:
+            from .csv_editor_dialog import CSVEditorDialog
+
+            # 固有名詞CSVファイルのパスを取得
+            proper_nouns_path = "data/proper_nouns.csv"
+            csv_editor = CSVEditorDialog(
+                self.app_instance, self, specific_file=proper_nouns_path
+            )
+            csv_editor.setWindowTitle("固有名詞辞書編集")
+            if csv_editor.exec_() == QDialog.Accepted:
+                # 設定を再読み込みして固有名詞リストを更新
+                self.app_instance.reload_settings()
+                QMessageBox.information(self, "完了", "固有名詞辞書が更新されました。")
+        except Exception as e:
+            QMessageBox.critical(
+                self, "エラー", f"固有名詞編集ダイアログを開けませんでした: {str(e)}"
             )

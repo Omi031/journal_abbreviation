@@ -9,6 +9,11 @@ input_font_size: 16
 jo_abb_path: data/jo_abb.csv
 jo_del_path: data/jo_del.csv
 mo_abb_path: data/mo_abb.csv
+proper_nouns_path: data/proper_nouns.csv
+# タイトルケース変換設定
+title_case_conversion: true
+# 固有名詞の自動判定機能
+auto_detect_proper_nouns: true
 output_font_family: Consolas
 output_font_size: 16
 ui_font_family: Segoe UI
