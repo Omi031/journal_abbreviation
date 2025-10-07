@@ -297,7 +297,7 @@ class DictionaryEditor {
         // Show confirmation dialog
         let confirmMessage;
         if (item.type === 'pair') {
-            confirmMessage = `「${item.original}」→「${item.abbreviated}」を削除しますか？`;
+            confirmMessage = `「${item.original}」→「${item.abbreviation}」を削除しますか？`;
         } else {
             confirmMessage = `「${item.word}」を削除しますか？`;
         }

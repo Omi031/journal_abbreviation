@@ -44,21 +44,25 @@ class CitationFormatter {
     }
     
     /**
-     * Load dictionaries from CSV data
-     * @param {Object} csvData - Object containing CSV data for different dictionaries
+     * Load dictionaries from dictionary data
+     * @param {Object} dictData - Object containing dictionary data arrays
      */
-    loadDictionaries(csvData) {
-        if (csvData.joAbb) {
-            this.joAbbDict = CSVParser.toDict(csvData.joAbb, 0, 1);
+    loadDictionaries(dictData) {
+        if (dictData.joAbb) {
+            // Convert array of [original, abbreviated] pairs to Map
+            this.joAbbDict = new Map(dictData.joAbb);
         }
-        if (csvData.joDel) {
-            this.joDelWords = CSVParser.toArray(csvData.joDel, 0);
+        if (dictData.joDel) {
+            // Convert array of [word] arrays to simple array
+            this.joDelWords = dictData.joDel.map(item => Array.isArray(item) ? item[0] : item);
         }
-        if (csvData.moAbb) {
-            this.moAbbDict = CSVParser.toDict(csvData.moAbb, 0, 1);
+        if (dictData.moAbb) {
+            // Convert array of [original, abbreviated] pairs to Map
+            this.moAbbDict = new Map(dictData.moAbb);
         }
-        if (csvData.properNouns) {
-            const properNounsArray = CSVParser.toArray(csvData.properNouns, 0);
+        if (dictData.properNouns) {
+            // Convert array of [noun] arrays to Set, merge with existing
+            const properNounsArray = dictData.properNouns.map(item => Array.isArray(item) ? item[0] : item);
             this.properNouns = new Set([...this.properNouns, ...properNounsArray]);
         }
     }

@@ -11,10 +11,6 @@ class SettingsManager {
             format: 'tex',
             input_font_family: 'Consolas',
             input_font_size: 16,
-            jo_abb_path: 'data/jo_abb.csv',
-            jo_del_path: 'data/jo_del.csv',
-            mo_abb_path: 'data/mo_abb.csv',
-            proper_nouns_path: 'data/proper_nouns.csv',
             title_case_conversion: true,
             auto_detect_proper_nouns: true,
             output_font_family: 'Consolas',
@@ -279,81 +275,7 @@ class SettingsManager {
         return true;
     }
     
-    /**
-     * Load default CSV files from data directory
-     * @returns {Promise<Object>} Promise resolving to CSV data object
-     */
-    async loadDefaultCSVFiles() {
-        const csvData = {};
-        const csvFiles = {
-            joAbb: this.currentSettings.jo_abb_path,
-            joDel: this.currentSettings.jo_del_path,
-            moAbb: this.currentSettings.mo_abb_path,
-            properNouns: this.currentSettings.proper_nouns_path
-        };
-        
-        console.log('Loading default CSV files...');
-        
-        // Load files in parallel with individual error handling
-        const loadPromises = Object.entries(csvFiles).map(async ([key, path]) => {
-            try {
-                console.log(`Loading ${key} from ${path}...`);
-                const data = await CSVParser.loadFromURL(path);
-                console.log(`✓ Successfully loaded ${key} (${data.length} rows)`);
-                return { key, data, success: true };
-            } catch (error) {
-                console.warn(`✗ Failed to load ${key} from ${path}:`, error.message);
-                return { key, success: false, error: error.message };
-            }
-        });
-        
-        const results = await Promise.allSettled(loadPromises);
-        
-        // Process results
-        let successCount = 0;
-        let totalCount = 0;
-        
-        results.forEach((result) => {
-            totalCount++;
-            if (result.status === 'fulfilled' && result.value.success) {
-                csvData[result.value.key] = result.value.data;
-                successCount++;
-            }
-        });
-        
-        console.log(`CSV loading completed: ${successCount}/${totalCount} files loaded successfully`);
-        
-        // Show status message
-        if (successCount === totalCount) {
-            this.showMessage(`全てのCSVファイルを読み込みました (${successCount}ファイル)`, 'success');
-        } else if (successCount > 0) {
-            this.showMessage(`CSVファイルを部分的に読み込みました (${successCount}/${totalCount}ファイル)`, 'warning');
-        } else {
-            this.showMessage('CSVファイルの読み込みに失敗しました。ローカルサーバーで実行していることを確認してください。', 'error');
-        }
-        
-        return csvData;
-    }
-    
-    /**
-     * Check if running under a web server (not file:// protocol)
-     * @returns {boolean} True if running under web server
-     */
-    isRunningUnderWebServer() {
-        return location.protocol === 'http:' || location.protocol === 'https:';
-    }
-    
-    /**
-     * Get CSV loading status message based on environment
-     * @returns {string} Status message
-     */
-    getCSVLoadingStatusMessage() {
-        if (this.isRunningUnderWebServer()) {
-            return 'デフォルトCSVファイルを自動読み込み中...';
-        } else {
-            return 'ファイルプロトコルで実行中 - CSVファイルは手動アップロードしてください';
-        }
-    }
+
     
     /**
      * Create settings UI event listeners

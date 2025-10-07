@@ -80,7 +80,7 @@ class JournalAbbreviationApp {
                 moAbb: Array.from(formatterData.moAbbDict.entries()),
                 properNouns: Array.from(formatterData.properNouns).map(noun => [noun])
             });
-            this.updateDictionaryStats();
+
         });
         
         // Dictionary management buttons
@@ -154,7 +154,7 @@ class JournalAbbreviationApp {
             const formatterData = this.dataManager.getFormatterData();
             
             // Convert to the format expected by CitationFormatter.loadDictionaries()
-            const csvData = {
+            const dictionaryData = {
                 joAbb: Array.from(formatterData.joAbbDict.entries()),
                 joDel: formatterData.joDelWords.map(word => [word]),
                 moAbb: Array.from(formatterData.moAbbDict.entries()),
@@ -162,10 +162,9 @@ class JournalAbbreviationApp {
             };
             
             // Load into formatter
-            this.formatter.loadDictionaries(csvData);
+            this.formatter.loadDictionaries(dictionaryData);
             
-            // Update statistics display
-            this.updateDictionaryStats();
+
             
             console.log('✓ Built-in dictionaries loaded successfully');
             
@@ -175,26 +174,7 @@ class JournalAbbreviationApp {
         }
     }
     
-    /**
-     * Update dictionary statistics display
-     */
-    updateDictionaryStats() {
-        const stats = this.dataManager.getStatistics();
-        
-        const elements = {
-            'stat-journal': stats.journalAbbreviations,
-            'stat-deletion': stats.deletionWords,
-            'stat-month': stats.monthAbbreviations,
-            'stat-proper': stats.properNouns
-        };
-        
-        Object.entries(elements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value.toString();
-            }
-        });
-    }
+
     
     /**
      * Export dictionaries
@@ -238,7 +218,7 @@ class JournalAbbreviationApp {
                 
                 if (this.dataManager.importData(data)) {
                     this.updateStatus('辞書データをインポートしました', 'success');
-                    this.updateDictionaryStats();
+
                 } else {
                     this.updateStatus('インポートに失敗しました。ファイル形式を確認してください。', 'error');
                 }

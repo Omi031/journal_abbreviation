@@ -98,25 +98,6 @@
                         <button id="import-dictionaries" class="dict-button">📥 インポート</button>
                     </div>
                     
-                    <div class="dict-stats" id="dictionary-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">雑誌略語:</span>
-                            <span class="stat-value" id="stat-journal">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">削除語:</span>
-                            <span class="stat-value" id="stat-deletion">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">月略語:</span>
-                            <span class="stat-value" id="stat-month">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">固有名詞:</span>
-                            <span class="stat-value" id="stat-proper">-</span>
-                        </div>
-                    </div>
-                    
                     <div class="dict-help">
                         <small>
                             � <strong>自動保存</strong>: 変更はブラウザに自動保存されます<br>
@@ -176,11 +157,10 @@ ER  -"></textarea>
 
         <div class="status-bar">
             <div id="status-message">準備完了</div>
-            <div id="file-status">CSV: 未読み込み</div>
+            <div id="file-status">内蔵辞書使用中</div>
         </div>
     </div>
 
-    <script src="js/csv-parser.js"></script>
     <script src="js/data-manager.js"></script>
     <script src="js/dictionary-editor.js"></script>
     <script src="js/formatter.js"></script>
