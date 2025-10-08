@@ -23,6 +23,7 @@
                     <select id="processing-mode">
                         <option value="full">完全なRIS形式フォーマット</option>
                         <option value="journal-only">雑誌名のみ略語変換</option>
+                        <option value="arxiv-bibtex">arXiv BibTeX</option>
                     </select>
                 </div>
 
@@ -114,9 +115,9 @@
                     <div class="input-header">
                         <h3>入力文献データ (RIS形式)</h3>
                     </div>
-                    <textarea id="input-text" placeholder="RIS形式の文献データをここに貼り付けてください...
+                    <textarea id="input-text" placeholder="RIS形式またはarXiv BibTeXの文献データをここに貼り付けてください...
 
-例:
+RIS形式の例:
 TY  - JOUR
 AU  - Smith, J.
 AU  - Johnson, A.
@@ -130,15 +131,16 @@ Y1  - 2023/05/
 DO  - 10.1109/example.2023.1234567
 ER  -
 
-TY  - CONF
-AU  - Brown, M.
-AU  - Davis, K.
-TI  - Deep Learning for Signal Processing Applications
-JO  - 2023 International Conference on Acoustics, Speech and Signal Processing
-SP  - 100
-EP  - 105
-Y1  - 2023/06/
-ER  -"></textarea>
+arXiv BibTeXの例:
+@misc{kingma2017adammethodstochasticoptimization,
+      title={Adam: A Method for Stochastic Optimization}, 
+      author={Diederik P. Kingma and Jimmy Ba},
+      year={2017},
+      eprint={1412.6980},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/1412.6980}, 
+}"></textarea>
                 </div>
 
                 <div class="controls">

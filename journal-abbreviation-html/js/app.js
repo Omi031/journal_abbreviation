@@ -365,7 +365,12 @@ class JournalAbbreviationApp {
             const results = this.formatter.formatMultiple(input, settings.format, settings.processing_mode);
             
             if (results.length === 0) {
-                const modeText = settings.processing_mode === 'journal-only' ? '雑誌名' : 'RIS形式のデータ';
+                let modeText = 'RIS形式のデータ';
+                if (settings.processing_mode === 'journal-only') {
+                    modeText = '雑誌名';
+                } else if (settings.processing_mode === 'arxiv-bibtex') {
+                    modeText = 'arXiv BibTeX形式のデータ';
+                }
                 outputText.value = `フォーマット可能な文献が見つかりませんでした。\n\n${modeText}を入力してください。`;
                 this.updateStatus('フォーマット可能な文献が見つかりません', 'warning');
                 this.showNotification(`フォーマット可能な文献が見つかりませんでした。${modeText}を入力してください。`, 'warning');
@@ -424,7 +429,12 @@ class JournalAbbreviationApp {
                 this.showNotification(`${successCount}件成功、${errorCount}件エラー`, 'warning');
             } else {
                 const settings = this.settingsManager.getSettings();
-                const modeText = settings.processing_mode === 'journal-only' ? '雑誌名' : 'RIS形式のデータ';
+                let modeText = 'RIS形式のデータ';
+                if (settings.processing_mode === 'journal-only') {
+                    modeText = '雑誌名';
+                } else if (settings.processing_mode === 'arxiv-bibtex') {
+                    modeText = 'arXiv BibTeX形式のデータ';
+                }
                 this.showNotification(`フォーマット可能な文献が見つかりませんでした。${modeText}を入力してください。`, 'warning');
             }
             

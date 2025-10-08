@@ -468,6 +468,10 @@ class CitationFormatter {
             return this.formatJournalNamesOnly(inputText, format);
         }
         
+        if (mode === 'arxiv-bibtex') {
+            return this.processArxivBibTeX(inputText, format);
+        }
+        
         const citations = this.parseRIS(inputText);
         const results = [];
         
@@ -550,6 +554,148 @@ class CitationFormatter {
                     error: error.message,
                     original: { JO: line },
                     mode: 'journal-only'
+                });
+            }
+        }
+        
+        return results;
+    }
+    
+    /**
+     * Parse BibTeX format and extract fields
+     * @param {string} bibtex - BibTeX formatted text
+     * @returns {Object} Extracted fields (title, author, year, eprint)
+     */
+    parseBibTeX(bibtex) {
+        const fields = {};
+        
+        // Extract title
+        const titleMatch = bibtex.match(/title\s*=\s*\{([^}]+)\}/i);
+        if (titleMatch) {
+            fields.title = titleMatch[1].trim();
+        }
+        
+        // Extract author
+        const authorMatch = bibtex.match(/author\s*=\s*\{([^}]+)\}/i);
+        if (authorMatch) {
+            fields.author = authorMatch[1].trim();
+        }
+        
+        // Extract year
+        const yearMatch = bibtex.match(/year\s*=\s*\{([^}]+)\}/i);
+        if (yearMatch) {
+            fields.year = yearMatch[1].trim();
+        }
+        
+        // Extract eprint (arXiv ID)
+        const eprintMatch = bibtex.match(/eprint\s*=\s*\{([^}]+)\}/i);
+        if (eprintMatch) {
+            fields.eprint = eprintMatch[1].trim();
+        }
+        
+        return fields;
+    }
+    
+    /**
+     * Format author names for arXiv citation (convert to initials)
+     * @param {string} authorStr - Author string from BibTeX (e.g., "Diederik P. Kingma and Jimmy Ba")
+     * @returns {string} Formatted author string (e.g., "D. P. Kingma and J. Ba")
+     */
+    formatArxivAuthors(authorStr) {
+        if (!authorStr) return '';
+        
+        const authors = authorStr.split(/\s+and\s+/i);
+        const formatted = authors.map(author => {
+            author = author.trim();
+            const parts = author.split(/\s+/);
+            if (parts.length === 0) return author;
+            
+            const lastName = parts[parts.length - 1];
+            const firstNames = parts.slice(0, -1);
+            
+            // Convert first and middle names to initials
+            const initials = firstNames.map(name => {
+                // If already an initial (e.g., "P."), keep it
+                if (name.length <= 2 && name.endsWith('.')) return name;
+                if (name.length === 1) return name + '.';
+                // Full name - take first character
+                return name.charAt(0).toUpperCase() + '.';
+            }).join(' ');
+            
+            return initials ? `${initials} ${lastName}` : lastName;
+        });
+        
+        return formatted.join(' and ');
+    }
+    
+    /**
+     * Format arXiv citation from BibTeX
+     * @param {string} bibtex - BibTeX formatted text
+     * @param {string} format - Output format ('tex' or 'plain')
+     * @returns {string} Formatted citation
+     */
+    formatArxivCitation(bibtex, format = 'tex') {
+        const fields = this.parseBibTeX(bibtex);
+        
+        // Validate required fields
+        if (!fields.author || !fields.title || !fields.year || !fields.eprint) {
+            throw new Error('arXiv BibTeX形式が正しくありません。author, title, year, eprintフィールドが必要です。');
+        }
+        
+        const authors = this.formatArxivAuthors(fields.author);
+        const title = fields.title;
+        const year = fields.year;
+        const arxivId = fields.eprint;
+        
+        if (format === 'tex') {
+            // TeX format: D. P. Kingma and J. Ba, ``Title,'' 2017, \textit{arXiv:1412.6980}.
+            return `${authors}, \`\`${title},'' ${year}, \\textit{arXiv:${arxivId}}.`;
+        } else {
+            // Plain format: D. P. Kingma and J. Ba, "Title," 2017, arXiv:1412.6980.
+            return `${authors}, "${title}," ${year}, arXiv:${arxivId}.`;
+        }
+    }
+    
+    /**
+     * Process arXiv BibTeX entries
+     * @param {string} text - Input text containing BibTeX entries
+     * @param {string} format - Output format ('tex' or 'plain')
+     * @returns {Array<Object>} Array of formatted citations
+     */
+    processArxivBibTeX(text, format = 'tex') {
+        const results = [];
+        
+        // Split by @misc or @article entries
+        const entries = text.split(/@(?=misc|article)/i).filter(e => e.trim());
+        
+        if (entries.length === 0) {
+            // If no @ found, treat entire text as single entry
+            entries.push(text);
+        }
+        
+        for (let entry of entries) {
+            entry = entry.trim();
+            if (!entry) continue;
+            
+            // Add @ back if it was removed
+            if (!entry.startsWith('@')) {
+                entry = '@' + entry;
+            }
+            
+            try {
+                const citation = this.formatArxivCitation(entry, format);
+                results.push({
+                    success: true,
+                    citation: citation,
+                    original: entry,
+                    mode: 'arxiv-bibtex'
+                });
+            } catch (error) {
+                results.push({
+                    success: false,
+                    error: error.message,
+                    original: entry,
+                    mode: 'arxiv-bibtex'
                 });
             }
         }

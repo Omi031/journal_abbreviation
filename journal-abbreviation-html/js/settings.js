@@ -470,6 +470,31 @@ Physical Review Letters
             if (inputHeader) {
                 inputHeader.textContent = '雑誌名入力';
             }
+        } else if (mode === 'arxiv-bibtex') {
+            if (inputText) {
+                inputText.placeholder = `arXiv BibTeX形式の文献データをここに貼り付けてください...
+
+例:
+@misc{kingma2017adammethodstochasticoptimization,
+      title={Adam: A Method for Stochastic Optimization}, 
+      author={Diederik P. Kingma and Jimmy Ba},
+      year={2017},
+      eprint={1412.6980},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/1412.6980}, 
+}
+
+@misc{vaswani2023attentionneed,
+      title={Attention Is All You Need}, 
+      author={Ashish Vaswani and Noam Shazeer and Niki Parmar and Jakob Uszkoreit and Llion Jones and Aidan N. Gomez and Lukasz Kaiser and Illia Polosukhin},
+      year={2023},
+      eprint={1706.03762},
+}`;
+            }
+            if (inputHeader) {
+                inputHeader.textContent = '入力文献データ (arXiv BibTeX形式)';
+            }
         } else {
             if (inputText) {
                 inputText.placeholder = `RIS形式の文献データをここに貼り付けてください...
