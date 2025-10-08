@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citation Formatter</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Citation Formatter</h1>
+            <p>学術文献の引用フォーマットを自動的に整形します</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Settings Panel -->
+            <div class="settings-panel">
+                <h3>設定</h3>
+                
+                <div class="setting-group">
+                    <label for="processing-mode">処理モード:</label>
+                    <select id="processing-mode">
+                        <option value="full">完全なRIS形式フォーマット</option>
+                        <option value="journal-only">雑誌名のみ略語変換</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="format-select">出力フォーマット:</label>
+                    <select id="format-select">
+                        <option value="tex">TeX</option>
+                        <option value="plain">プレーンテキスト</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="et-al-threshold" title="著者数がこの値以上の場合、'第一著者 et al.'の形式で省略します。例: 閾値6で著者が6人以上の場合 → 'Smith et al.'　デフォルト: 6">Et al.閾値:</label>
+                    <input type="number" id="et-al-threshold" min="2" max="10" value="6">
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="conf-with-proc" checked>
+                        会議論文に "Proc." を付加
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="conf-with-in">
+                        会議論文に "in" を付加
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="conf-with-year">
+                        会議名に年を含める
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label title="例: 'Deep Learning For Signal Processing' → 'Deep learning for signal processing'">
+                        <input type="checkbox" id="title-case-conversion" checked>
+                        タイトルケース変換
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="auto-detect-proper-nouns" checked>
+                        固有名詞の自動判定
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="auto-copy-clipboard" checked>
+                        自動的にクリップボードにコピー
+                    </label>
+                </div>
+
+                <div class="file-controls">
+                    <button id="load-settings">設定を読み込み</button>
+                    <button id="save-settings">設定を保存</button>
+                </div>
+
+                <div class="dictionary-management">
+                    <h4>辞書管理</h4>
+                    <div class="dict-status">
+                        <small id="dict-status-info">内蔵辞書を使用中</small>
+                    </div>
+                    
+                    <div class="dict-actions">
+                        <button id="edit-dictionaries" class="dict-button">📖 辞書を編集</button>
+                        <button id="export-dictionaries" class="dict-button">📤 エクスポート</button>
+                        <button id="import-dictionaries" class="dict-button">📥 インポート</button>
+                    </div>
+                    
+                    <div class="dict-help">
+                        <small>
+                            � <strong>自動保存</strong>: 変更はブラウザに自動保存されます<br>
+                            � <strong>同期</strong>: 他のブラウザと同期するにはエクスポート/インポート機能を使用<br>
+                            📝 <strong>編集</strong>: 「辞書を編集」ボタンで直接編集可能
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Processing Area -->
+            <div class="processing-area">
+                <div class="input-section">
+                    <div class="input-header">
+                        <h3>入力文献データ (RIS形式)</h3>
+                    </div>
+                    <textarea id="input-text" placeholder="RIS形式の文献データをここに貼り付けてください...
+
+例:
+TY  - JOUR
+AU  - Smith, J.
+AU  - Johnson, A.
+TI  - A Study on Machine Learning Applications in Neural Networks
+JO  - IEEE Transactions on Neural Networks and Learning Systems
+VL  - 30
+IS  - 5
+SP  - 1234
+EP  - 1245
+Y1  - 2023/05/
+DO  - 10.1109/example.2023.1234567
+ER  -
+
+TY  - CONF
+AU  - Brown, M.
+AU  - Davis, K.
+TI  - Deep Learning for Signal Processing Applications
+JO  - 2023 International Conference on Acoustics, Speech and Signal Processing
+SP  - 100
+EP  - 105
+Y1  - 2023/06/
+ER  -"></textarea>
+                </div>
+
+                <div class="controls">
+                    <button id="paste-button" class="control-button" title="クリップボードから貼り付け (Ctrl+V)">ペースト</button>
+                    <button id="copy-button" class="control-button" title="結果をクリップボードにコピー (Ctrl+Shift+C)">コピー</button>
+                    <button id="format-button" class="primary-button" title="RISデータをフォーマット (Ctrl+Enter)">フォーマット実行</button>
+                    <button id="clear-button" class="control-button" title="入力・出力をクリア (Ctrl+K)">クリア</button>
+                </div>
+
+                <div class="output-section">
+                    <h3>フォーマット済み引用</h3>
+                    <textarea id="output-text" readonly placeholder="フォーマット済みの引用文がここに表示されます...&#10;&#10;複数の文献がある場合は空行で区切られます。"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div id="status-message">準備完了</div>
+            <div id="file-status">内蔵辞書使用中</div>
+        </div>
+    </div>
+
+    <script src="js/data-manager.js"></script>
+    <script src="js/dictionary-editor.js"></script>
+    <script src="js/formatter.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
