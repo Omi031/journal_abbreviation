@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QGroupBox,
     QApplication,
+    QFrame,
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPalette, QColor
@@ -360,6 +361,44 @@ class MainWindow(QMainWindow):
         # 入力部分
         self.input_label = QLabel("RIS形式の参考文献データを入力してください:")
         self.layout.addWidget(self.input_label)
+        # --- ジャーナル略語クイック検索エリア ---
+        journal_group = QGroupBox("ジャーナル略語クイック検索")
+        j_layout = QVBoxLayout()
+        journal_group.setLayout(j_layout)
+
+        instruct = QLabel(
+            "ジャーナル正式名称を入力すると略語を即座に表示します。\n例: IEEE Transactions on Wireless Communications → IEEE Trans. Wireless Commun."
+        )
+        instruct.setStyleSheet("color:#555;font-size:11px;")
+        j_layout.addWidget(instruct)
+
+        line_layout = QHBoxLayout()
+        self.journal_input = QLineEdit()
+        self.journal_input.setPlaceholderText("ジャーナル正式名称を入力...")
+        self.journal_input.textChanged.connect(
+            self.update_journal_abbreviation_preview
+        )
+        line_layout.addWidget(self.journal_input)
+
+        self.journal_search_button = QPushButton("検索")
+        self.journal_search_button.clicked.connect(self.trigger_journal_search)
+        line_layout.addWidget(self.journal_search_button)
+        j_layout.addLayout(line_layout)
+
+        result_line = QHBoxLayout()
+        result_label = QLabel("略語:")
+        result_label.setStyleSheet("font-weight:bold;")
+        result_line.addWidget(result_label)
+        self.journal_result = QLineEdit()
+        self.journal_result.setReadOnly(True)
+        self.journal_result.setPlaceholderText("一致する略語が表示されます")
+        result_line.addWidget(self.journal_result)
+        copy_btn = QPushButton("コピー")
+        copy_btn.clicked.connect(self.copy_journal_abbreviation)
+        result_line.addWidget(copy_btn)
+        j_layout.addLayout(result_line)
+
+        self.layout.addWidget(journal_group)
 
         self.input_text = QTextEdit()
         self.input_text.setPlaceholderText(
@@ -418,6 +457,32 @@ class MainWindow(QMainWindow):
 
         # 初期フォント設定を適用
         self.update_font_settings()
+
+    def trigger_journal_search(self):
+        self.update_journal_abbreviation_preview()
+
+    def update_journal_abbreviation_preview(self):
+        name = self.journal_input.text()
+        if not name.strip():
+            self.journal_result.clear()
+            return
+        # 単語単位で略語化
+        abbr_full = self.app.build_journal_abbreviation(name)
+        # 完全一致略語（単一語一致）も試す
+        single = self.app.find_journal_abbreviation(name)
+        display = single if single else abbr_full
+        self.journal_result.setText(display)
+
+        if not display:
+            self.journal_result.setPlaceholderText("一致なし / CSVへ追加してください")
+
+    def copy_journal_abbreviation(self):
+        text = self.journal_result.text()
+        if text:
+            QApplication.clipboard().setText(text)
+            QMessageBox.information(self, "コピー", "略語をクリップボードにコピーしました。")
+        else:
+            QMessageBox.information(self, "情報", "コピーする略語がありません。")
 
     def update_font_settings(self):
         """フォント設定を更新"""

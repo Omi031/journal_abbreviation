@@ -47,6 +47,142 @@ class App:
 
         self.load_settings()
 
+    def find_journal_abbreviation(self, journal_name: str) -> str:
+        """ジャーナル正式名から略語を検索して返す。
+
+        検索仕様:
+        - 大文字小文字は無視
+        - 余分なスペースをトリム
+        - 完全一致を優先。見つからない場合は前方一致候補を返す（最初の1件）。
+        - 見つからない場合は空文字列。
+        """
+        if not journal_name:
+            return ""
+        name_norm = journal_name.strip().lower()
+        if not name_norm:
+            return ""
+
+        # jo_abb_list は [元名称リスト, 略語リスト] 形式を想定
+        if not self.jo_abb_list or len(self.jo_abb_list) < 2:
+            return ""
+
+        originals = self.jo_abb_list[0]
+        abbs = self.jo_abb_list[1]
+
+        def format_abbr(a: str) -> str:
+            if not a:
+                return a
+            if a.endswith('.'):
+                return a
+            # 完全大文字（A-Zと数字のみ）の場合はピリオド付けない（IEEE, AI など）
+            if all(c.isupper() or c.isdigit() for c in a if c.isalnum()):
+                return a
+            # それ以外（短縮形）にはピリオド付与
+            return a + '.'
+        # 完全一致検索
+        for i, orig in enumerate(originals):
+            if orig and orig.strip().lower() == name_norm:
+                return format_abbr(abbs[i] if i < len(abbs) else "")
+
+        # 前方一致候補
+        for i, orig in enumerate(originals):
+            if orig and orig.strip().lower().startswith(name_norm):
+                return format_abbr(abbs[i] if i < len(abbs) else "")
+        return ""
+
+    def build_journal_abbreviation(self, journal_title: str) -> str:
+        """ジャーナルタイトル全体を単語ごとに略語化して返す。
+
+        ルール:
+        - CSV の original -> abbreviation を単語単位で適用
+        - 大文字小文字は無視し、出力は CSV の abbreviation をそのまま使用
+        - 括弧・カンマ・ハイフン等の記号は維持
+        - 既に略語っぽい（全て大文字 か 3文字以下）単語はそのまま
+        - 数字のみのトークンはそのまま
+        - アポストロフィやハイフンで分割された部分も個別判定
+        """
+        if not journal_title:
+            return ""
+        if not self.jo_abb_list or len(self.jo_abb_list) < 2:
+            return journal_title
+
+        # まず削除リスト適用（クイック検索経由でも 'and' などを除去するため）
+        try:
+            journal_title = self.delete(journal_title, self.jo_del_list)
+        except Exception:
+            pass
+
+        originals = self.jo_abb_list[0]
+        abbs = self.jo_abb_list[1]
+        # マッピング辞書（小文字キー）
+        mapping_raw = {
+            (orig.strip().lower() if orig else ""): (abbs[i] if i < len(abbs) else "")
+            for i, orig in enumerate(originals)
+            if orig
+        }
+
+        def format_abbr(a: str) -> str:
+            if not a:
+                return a
+            if a.endswith('.'):
+                return a
+            if all(c.isupper() or c.isdigit() for c in a if c.isalnum()):
+                return a
+            return a + '.'
+
+        # フォーマット済みマッピング
+        mapping = {k: format_abbr(v) for k, v in mapping_raw.items()}
+
+        import re
+
+        # トークン分割（単語 or 記号）
+        tokens = re.findall(r"[A-Za-z0-9\-']+|[^A-Za-z0-9\s]", journal_title)
+        result_tokens = []
+        for tok in tokens:
+            # 英数字主体のトークンのみ処理
+            if re.fullmatch(r"[A-Za-z0-9\-']+", tok):
+                # ハイフンやアポストロフィでさらに分割し、再構築
+                sub_parts = re.split(r"([-'])", tok)  # 区切り記号も保持
+                rebuilt = []
+                for part in sub_parts:
+                    if part in ["-", "'"]:
+                        rebuilt.append(part)
+                        continue
+                    low = part.lower()
+                    if not part or low.isdigit():
+                        rebuilt.append(part)
+                        continue
+                    # 既に略語っぽい
+                    if part.isupper() or len(part) <= 3:
+                        rebuilt.append(part)
+                        continue
+                    if low in mapping and mapping[low]:
+                        rebuilt.append(mapping[low])
+                    else:
+                        rebuilt.append(part)
+                result_tokens.append("".join(rebuilt))
+            else:
+                # 記号などはそのまま
+                result_tokens.append(tok)
+
+        # スペース再付与: 連続する英数字/記号境界を自然にするため、元文字列の空白を利用せず簡易再構築
+        # 記号の前後で不要なスペースを避けるため調整
+        out = []
+        for i, t in enumerate(result_tokens):
+            out.append(t)
+            if i < len(result_tokens) - 1:
+                nxt = result_tokens[i + 1]
+                # コロンで終わるトークンの後はスペースを挿入しない（"2015:18th" など）
+                if t.endswith(":"):
+                    continue
+                # 次が記号ならスペース不要 / 自分が記号ならスペース不要
+                if re.fullmatch(r"[^A-Za-z0-9]", nxt):
+                    continue
+                if re.fullmatch(r"[^A-Za-z0-9]", t):
+                    continue
+                out.append(" ")
+        return "".join(out).strip()
+
     def load_settings(self):
         """設定を読み込む"""
         try:
@@ -316,24 +452,83 @@ class App:
         return data
 
     def delete(self, text, del_list):
-        text = text.split()
+        """削除単語リスト(del_list)に含まれる語をジャーナル名文字列から除去。
 
-        for i, t in enumerate(text):
-            if t in del_list[0]:
-                text[i] = ""
+        改良点:
+        - 大文字小文字を無視
+        - 単語の前後に付いた句読点 (.,:;!?()[]{}) / カンマ / & などを無視して判定
+        - '&' 単体もリストにあれば削除
+        - 削除後の余分なスペースを整形
+        注意: 'of,' のような語を除去した場合、その語に付随していた句読点も同時に消える（シンプル実装）
+        """
+        if not text:
+            return text
+        # del_list 期待形式: [ [word1, word2, ...] ]
+        try:
+            raw_words = del_list[0] if del_list and len(del_list) > 0 else []
+        except Exception:
+            raw_words = []
+        del_set = {w.strip().lower() for w in raw_words if w and w.strip()}
+        if not del_set:
+            return text
 
-        text = " ".join([w for w in text if w != ""])
-        return text
+        import re
+
+        tokens = text.split()
+        kept = []
+        for tok in tokens:
+            # 前後の句読点を除去したクリーン版（内部のハイフンやアポストロフィは保持）
+            cleaned = re.sub(r"^[\s\.,;:!\?\(\)\[\]\{\}\"']+|[\s\.,;:!\?\(\)\[\]\{\}\"']+$", "", tok)
+            if cleaned.lower() in del_set:
+                continue  # 削除
+            kept.append(tok)
+
+        # 連続スペースを1つに
+        return re.sub(r"\s+", " ", " ".join(kept)).strip()
 
     def abbreviate(self, text, abb_list):
-        text = text.split()
+        """単語ごとの略語化。
 
-        for i, t in enumerate(text):
-            if t in abb_list[0]:
-                text[i] = abb_list[1][abb_list[0].index(t)] + "."
+        改良点:
+        - 大文字小文字非依存
+        - 末尾句読点等 (.,:;!?)]}) を保持
+        - 既存の略語が既にピリオド付きなら重ねて付けない
+        - 全大文字(AI, LTE など)はピリオドを付与しない
+        """
+        if not text:
+            return text
+        try:
+            originals = abb_list[0] if abb_list and len(abb_list) > 0 else []
+            abbrevs = abb_list[1] if abb_list and len(abb_list) > 1 else []
+        except Exception:
+            return text
 
-        text = " ".join(text)
-        return text
+        mapping = {}
+        for i, orig in enumerate(originals):
+            if not orig:
+                continue
+            ab = abbrevs[i] if i < len(abbrevs) else ""
+            if ab:
+                if not ab.endswith('.') and not all(c.isupper() or c.isdigit() for c in ab if c.isalnum()):
+                    ab = ab + '.'
+                mapping[orig.strip().lower()] = ab
+
+        import re
+        tokens = text.split()
+        out = []
+        for tok in tokens:
+            m = re.match(r"^(.*?)([\.,;:!\?\]\)\}\"]+)$", tok)
+            core = tok
+            tail = ""
+            if m:
+                core = m.group(1)
+                tail = m.group(2)
+            repl = mapping.get(core.lower())
+            if repl:
+                out.append(repl + tail)
+            else:
+                out.append(tok)
+        return " ".join(out)
 
     def au_formatter(self, au_list, format="tex"):
         if isinstance(au_list, str):
