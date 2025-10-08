@@ -375,9 +375,7 @@ class MainWindow(QMainWindow):
         line_layout = QHBoxLayout()
         self.journal_input = QLineEdit()
         self.journal_input.setPlaceholderText("ジャーナル正式名称を入力...")
-        self.journal_input.textChanged.connect(
-            self.update_journal_abbreviation_preview
-        )
+        self.journal_input.textChanged.connect(self.update_journal_abbreviation_preview)
         line_layout.addWidget(self.journal_input)
 
         self.journal_search_button = QPushButton("検索")
@@ -480,7 +478,9 @@ class MainWindow(QMainWindow):
         text = self.journal_result.text()
         if text:
             QApplication.clipboard().setText(text)
-            QMessageBox.information(self, "コピー", "略語をクリップボードにコピーしました。")
+            QMessageBox.information(
+                self, "コピー", "略語をクリップボードにコピーしました。"
+            )
         else:
             QMessageBox.information(self, "情報", "コピーする略語がありません。")
 

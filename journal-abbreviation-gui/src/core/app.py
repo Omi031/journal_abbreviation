@@ -72,13 +72,14 @@ class App:
         def format_abbr(a: str) -> str:
             if not a:
                 return a
-            if a.endswith('.'):
+            if a.endswith("."):
                 return a
             # 完全大文字（A-Zと数字のみ）の場合はピリオド付けない（IEEE, AI など）
             if all(c.isupper() or c.isdigit() for c in a if c.isalnum()):
                 return a
             # それ以外（短縮形）にはピリオド付与
-            return a + '.'
+            return a + "."
+
         # 完全一致検索
         for i, orig in enumerate(originals):
             if orig and orig.strip().lower() == name_norm:
@@ -124,11 +125,11 @@ class App:
         def format_abbr(a: str) -> str:
             if not a:
                 return a
-            if a.endswith('.'):
+            if a.endswith("."):
                 return a
             if all(c.isupper() or c.isdigit() for c in a if c.isalnum()):
                 return a
-            return a + '.'
+            return a + "."
 
         # フォーマット済みマッピング
         mapping = {k: format_abbr(v) for k, v in mapping_raw.items()}
@@ -478,7 +479,9 @@ class App:
         kept = []
         for tok in tokens:
             # 前後の句読点を除去したクリーン版（内部のハイフンやアポストロフィは保持）
-            cleaned = re.sub(r"^[\s\.,;:!\?\(\)\[\]\{\}\"']+|[\s\.,;:!\?\(\)\[\]\{\}\"']+$", "", tok)
+            cleaned = re.sub(
+                r"^[\s\.,;:!\?\(\)\[\]\{\}\"']+|[\s\.,;:!\?\(\)\[\]\{\}\"']+$", "", tok
+            )
             if cleaned.lower() in del_set:
                 continue  # 削除
             kept.append(tok)
@@ -509,11 +512,14 @@ class App:
                 continue
             ab = abbrevs[i] if i < len(abbrevs) else ""
             if ab:
-                if not ab.endswith('.') and not all(c.isupper() or c.isdigit() for c in ab if c.isalnum()):
-                    ab = ab + '.'
+                if not ab.endswith(".") and not all(
+                    c.isupper() or c.isdigit() for c in ab if c.isalnum()
+                ):
+                    ab = ab + "."
                 mapping[orig.strip().lower()] = ab
 
         import re
+
         tokens = text.split()
         out = []
         for tok in tokens:
