@@ -643,7 +643,7 @@ class CitationFormatter {
         }
         
         const authors = this.formatArxivAuthors(fields.author);
-        const title = fields.title;
+        const title = this.convertToTitleCase(fields.title);
         const year = fields.year;
         const arxivId = fields.eprint;
         
